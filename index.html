@@ -1,0 +1,3404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>COA Lab Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+/* ===== RESET & BASE ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;
+  --bg2:#0f0f1a;
+  --bg3:#13131f;
+  --card:#161625;
+  --card2:#1c1c30;
+  --border:#2a2a45;
+  --purple:#a855f7;
+  --purple-dim:#7c3aed;
+  --cyan:#22d3ee;
+  --cyan-dim:#0891b2;
+  --green:#4ade80;
+  --green-dim:#16a34a;
+  --yellow:#fbbf24;
+  --red:#f87171;
+  --text:#e2e8f0;
+  --text-dim:#94a3b8;
+  --text-muted:#475569;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Inter',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#3a3a5a}
+
+/* ===== HEADER ===== */
+.header{
+  background:linear-gradient(135deg,rgba(168,85,247,.15) 0%,rgba(34,211,238,.1) 50%,rgba(74,222,128,.08) 100%);
+  border-bottom:1px solid var(--border);
+  padding:2rem 1.5rem 1.5rem;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.header::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 80% at 50% -20%,rgba(168,85,247,.2) 0%,transparent 70%);
+  pointer-events:none;
+}
+.header h1{
+  font-size:clamp(1.8rem,5vw,3rem);font-weight:800;
+  background:linear-gradient(90deg,var(--purple),var(--cyan),var(--green));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  letter-spacing:-.5px;position:relative;
+}
+.header p{color:var(--text-dim);font-size:.95rem;margin-top:.5rem;position:relative}
+.header-badges{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-top:.8rem;position:relative}
+.badge{
+  padding:.2rem .7rem;border-radius:999px;font-size:.75rem;font-weight:600;
+  border:1px solid;
+}
+.badge-purple{color:var(--purple);border-color:rgba(168,85,247,.4);background:rgba(168,85,247,.1)}
+.badge-cyan{color:var(--cyan);border-color:rgba(34,211,238,.4);background:rgba(34,211,238,.1)}
+.badge-green{color:var(--green);border-color:rgba(74,222,128,.4);background:rgba(74,222,128,.1)}
+
+/* ===== TABS ===== */
+.tabs-wrapper{background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)}
+.tabs{display:flex;overflow-x:auto;max-width:1200px;margin:0 auto;padding:0 1rem}
+.tab-btn{
+  flex-shrink:0;padding:.9rem 1.5rem;font-family:var(--sans);font-size:.85rem;font-weight:600;
+  border:none;background:none;color:var(--text-dim);cursor:pointer;
+  border-bottom:3px solid transparent;transition:all .25s;white-space:nowrap;
+}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active-purple{color:var(--purple);border-bottom-color:var(--purple)}
+.tab-btn.active-cyan{color:var(--cyan);border-bottom-color:var(--cyan)}
+.tab-btn.active-green{color:var(--green);border-bottom-color:var(--green)}
+
+/* ===== CONTENT ===== */
+.content{max-width:1200px;margin:0 auto;padding:1.5rem}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+/* ===== SECTION TITLE ===== */
+.section-title{
+  display:flex;align-items:center;gap:.75rem;
+  font-size:1.1rem;font-weight:700;margin:1.5rem 0 1rem;
+  color:var(--text-dim);
+}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ===== GRID ===== */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(500px,1fr));gap:1.25rem}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
+
+/* ===== CARD ===== */
+.card{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  overflow:hidden;transition:border-color .25s,box-shadow .25s;
+}
+.card:hover{border-color:rgba(168,85,247,.35);box-shadow:0 0 25px rgba(168,85,247,.07)}
+.card-header{
+  padding:1rem 1.25rem .75rem;
+  display:flex;align-items:center;gap:.75rem;
+  border-bottom:1px solid var(--border);
+}
+.card-num{
+  width:28px;height:28px;border-radius:8px;display:flex;align-items:center;
+  justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0;
+}
+.card-num-purple{background:rgba(168,85,247,.2);color:var(--purple)}
+.card-num-cyan{background:rgba(34,211,238,.2);color:var(--cyan)}
+.card-num-green{background:rgba(74,222,128,.2);color:var(--green)}
+.card-title{font-size:.9rem;font-weight:600;color:var(--text)}
+.card-body{padding:1rem 1.25rem}
+
+/* ===== INPUTS ===== */
+.inputs-row{display:flex;flex-wrap:wrap;gap:.6rem;align-items:flex-end;margin-bottom:.8rem}
+.input-grp{display:flex;flex-direction:column;gap:.3rem}
+.input-grp label{font-size:.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px}
+.inp{
+  font-family:var(--mono);font-size:.85rem;
+  background:var(--bg3);border:1px solid var(--border);color:var(--text);
+  padding:.45rem .75rem;border-radius:8px;outline:none;width:120px;
+  transition:border-color .2s,box-shadow .2s;
+}
+.inp:focus{border-color:var(--purple);box-shadow:0 0 0 2px rgba(168,85,247,.2)}
+.inp-sm{width:80px}
+
+/* ===== BUTTON ===== */
+.btn{
+  padding:.5rem 1.2rem;border-radius:8px;border:none;font-family:var(--sans);
+  font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;
+}
+.btn-purple{background:linear-gradient(135deg,var(--purple-dim),var(--purple));color:#fff}
+.btn-purple:hover{filter:brightness(1.15);box-shadow:0 0 15px rgba(168,85,247,.4)}
+.btn-cyan{background:linear-gradient(135deg,var(--cyan-dim),var(--cyan));color:#000}
+.btn-cyan:hover{filter:brightness(1.1);box-shadow:0 0 15px rgba(34,211,238,.4)}
+.btn-green{background:linear-gradient(135deg,var(--green-dim),var(--green));color:#000}
+.btn-green:hover{filter:brightness(1.1);box-shadow:0 0 15px rgba(74,222,128,.4)}
+.btn-sm{padding:.35rem .8rem;font-size:.78rem}
+
+/* ===== OUTPUT PANEL ===== */
+.output{
+  background:var(--bg3);border:1px solid var(--border);border-radius:10px;
+  padding:.8rem;min-height:60px;font-family:var(--mono);font-size:.8rem;
+  line-height:1.8;overflow-x:auto;
+}
+.output:empty::before{content:'Press Simulate to see step-by-step output';color:var(--text-muted)}
+
+/* ===== STEP LINES ===== */
+.step{
+  display:flex;flex-wrap:wrap;gap:.3rem;align-items:center;
+  padding:.2rem .4rem;border-radius:6px;margin-bottom:.15rem;
+  animation:fadeIn .3s ease;
+}
+.step:nth-child(even){background:rgba(255,255,255,.02)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.step-label{color:var(--text-muted);font-size:.72rem;min-width:90px}
+.step-title{color:var(--cyan);font-weight:600;font-size:.78rem;width:100%}
+.step-note{color:var(--text-dim);font-size:.74rem;font-style:italic}
+.step-sep{width:100%;height:1px;background:var(--border);margin:.4rem 0}
+
+/* ===== BITS ===== */
+.bit-1{color:var(--green);font-weight:700}
+.bit-0{color:var(--text-muted)}
+.bit-box{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:20px;height:20px;border-radius:4px;font-size:.75rem;font-weight:700;
+  margin:1px;
+}
+.bit-box-1{background:rgba(74,222,128,.2);color:var(--green);border:1px solid rgba(74,222,128,.4)}
+.bit-box-0{background:rgba(71,85,105,.15);color:var(--text-muted);border:1px solid var(--border)}
+.bit-row{display:flex;flex-wrap:wrap;gap:2px;align-items:center}
+.result-val{color:var(--yellow);font-weight:700;font-size:.9rem}
+.highlight{color:var(--yellow);font-weight:700}
+.ok{color:var(--green)}
+.warn{color:var(--red)}
+
+/* ===== REGISTER TABLE ===== */
+.reg-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.78rem;margin:.5rem 0}
+.reg-table th{background:rgba(168,85,247,.15);color:var(--purple);padding:.35rem .6rem;text-align:center;border:1px solid var(--border)}
+.reg-table td{padding:.35rem .6rem;text-align:center;border:1px solid var(--border);transition:background .4s}
+.reg-table tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+.reg-active{background:rgba(168,85,247,.2)!important;color:var(--yellow)!important}
+.flag-on{color:var(--green);font-weight:700}
+.flag-off{color:var(--text-muted)}
+
+/* ===== TRUTH TABLE ===== */
+.tt{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.8rem;margin:.5rem 0}
+.tt th{background:rgba(74,222,128,.12);color:var(--green);padding:.3rem .5rem;border:1px solid var(--border);text-align:center}
+.tt td{padding:.3rem .5rem;border:1px solid var(--border);text-align:center}
+.tt tr:last-child td{background:rgba(255,255,255,.03)}
+
+/* ===== ALGO TABLE ===== */
+.algo-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.75rem;margin:.5rem 0}
+.algo-table th{background:rgba(34,211,238,.12);color:var(--cyan);padding:.3rem .5rem;border:1px solid var(--border);text-align:center;white-space:nowrap}
+.algo-table td{padding:.3rem .5rem;border:1px solid var(--border);text-align:center;white-space:nowrap}
+.algo-table tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+.algo-table tr.algo-highlight td{background:rgba(251,191,36,.08);color:var(--yellow)}
+
+/* ===== SVG GATES ===== */
+.gates-row{display:flex;flex-wrap:wrap;gap:1rem;margin:.5rem 0}
+.gate-wrap{display:flex;flex-direction:column;align-items:center;gap:.3rem}
+.gate-label{font-size:.72rem;color:var(--text-muted)}
+
+/* ===== BIT GROUPS ===== */
+.bit-group{display:inline-flex;align-items:center;gap:1px;padding:2px 4px;border-radius:5px;margin:1px}
+.bit-group-purple{background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.3)}
+.bit-group-cyan{background:rgba(34,211,238,.15);border:1px solid rgba(34,211,238,.3)}
+.bit-group-green{background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.3)}
+
+/* ===== PROGRESS ANIMATE ===== */
+.anim-step{opacity:0;animation:popIn .4s ease forwards}
+@keyframes popIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:none}}
+
+
+/* ===== DYNAMICS & SIMULATION ENGINE ===== */
+.dyn-global-bar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 0.65rem 1.5rem;
+  position: sticky;
+  top: 48px;
+  z-index: 95;
+  backdrop-filter: blur(12px);
+}
+.dyn-global-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  align-items: center;
+  justify-content: space-between;
+}
+.dyn-clock-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  padding: 0.3rem 0.65rem;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  user-select: none;
+}
+.dyn-clock-led {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #334155;
+  transition: all 0.12s ease;
+}
+.dyn-clock-led.pulse {
+  background: #4ade80;
+  box-shadow: 0 0 10px #4ade80, 0 0 16px rgba(74, 222, 128, 0.7);
+}
+.dyn-global-group {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.dyn-mode-toggle {
+  display: inline-flex;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+.dyn-mode-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--sans);
+}
+.dyn-mode-btn.active {
+  background: rgba(168, 85, 247, 0.2);
+  color: var(--purple);
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.25);
+}
+.dyn-select {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.28rem 0.6rem;
+  border-radius: 8px;
+  outline: none;
+  cursor: pointer;
+}
+.dyn-sound-btn, .dyn-action-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 0.28rem 0.7rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--sans);
+}
+.dyn-sound-btn:hover, .dyn-action-btn:hover {
+  border-color: var(--cyan);
+  color: var(--text);
+}
+.dyn-sound-btn.on {
+  color: var(--green);
+  border-color: rgba(74, 222, 128, 0.4);
+  background: rgba(74, 222, 128, 0.12);
+}
+
+/* ===== DYNAMICS CARD PLAYER ===== */
+.dyn-player {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+}
+.dyn-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.65rem;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.dyn-ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.28rem 0.55rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+.dyn-ctrl-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--text-dim);
+}
+.dyn-ctrl-btn.btn-play-active {
+  background: rgba(74, 222, 128, 0.2);
+  color: var(--green);
+  border-color: rgba(74, 222, 128, 0.6);
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.25);
+}
+.dyn-ctrl-btn.btn-instant {
+  color: var(--cyan);
+  border-color: rgba(34, 211, 238, 0.3);
+}
+.dyn-ctrl-btn.btn-instant:hover {
+  background: rgba(34, 211, 238, 0.15);
+}
+.dyn-ctrl-spacer {
+  flex: 1;
+}
+.dyn-step-counter {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--cyan);
+  background: rgba(34, 211, 238, 0.08);
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(34, 211, 238, 0.2);
+}
+.dyn-progress-wrap {
+  width: 100%;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 0.1rem 0;
+}
+.dyn-progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--purple), var(--cyan), var(--green));
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.5);
+}
+
+/* ===== DYNAMICS VISUAL STAGE ===== */
+.dyn-visual-stage {
+  background: radial-gradient(circle at 50% 30%, rgba(34, 211, 238, 0.04), transparent 75%), var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem;
+  margin-bottom: 0.5rem;
+  overflow-x: auto;
+  position: relative;
+}
+.dyn-stage-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  gap: 0.5rem;
+}
+.dyn-stage-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.dyn-chip {
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: rgba(168, 85, 247, 0.15);
+  color: var(--purple);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+.dyn-phase-tag {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(34, 211, 238, 0.12);
+  color: var(--cyan);
+  border: 1px solid rgba(34, 211, 238, 0.3);
+  letter-spacing: 0.5px;
+}
+
+/* ===== 8086 CPU DATAPATH STYLING ===== */
+.dyn-cpu-blocks {
+  display: grid;
+  grid-template-columns: 1.2fr 0.6fr 1.2fr 1fr;
+  gap: 0.75rem;
+  align-items: center;
+}
+@media(max-width: 768px) {
+  .dyn-cpu-blocks {
+    grid-template-columns: 1fr;
+  }
+}
+.dyn-block {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem;
+  position: relative;
+}
+.dyn-block-lbl {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+.dyn-reg-box {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s;
+}
+.dyn-reg-box.active-reg {
+  border-color: var(--purple);
+  background: rgba(168, 85, 247, 0.12);
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
+}
+.dyn-reg-lbl {
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--purple);
+  min-width: 24px;
+}
+.dyn-reg-row {
+  display: flex;
+  gap: 0.35rem;
+  flex: 1;
+}
+.dyn-reg-cell {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.2rem 0.35rem;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  position: relative;
+  transition: all 0.3s;
+}
+.dyn-reg-cell small {
+  display: block;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+}
+.dyn-reg-cell b {
+  color: var(--text);
+}
+.dyn-reg-sub {
+  font-size: 0.62rem;
+  color: var(--cyan);
+}
+.cell-flash {
+  border-color: var(--yellow) !important;
+  background: rgba(251, 191, 36, 0.2) !important;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.4);
+}
+.dyn-bus-path {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0;
+}
+.dyn-bus-track {
+  background: rgba(34, 211, 238, 0.05);
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  text-align: center;
+  width: 100%;
+  transition: all 0.3s;
+}
+.dyn-bus-path.bus-flowing .dyn-bus-track {
+  border-color: var(--cyan);
+  background: rgba(34, 211, 238, 0.15);
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.3);
+}
+.dyn-bus-text {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  display: block;
+}
+.dyn-bus-arrow {
+  color: var(--cyan);
+  font-size: 0.9rem;
+  animation: busPulse 1s ease-in-out infinite;
+}
+@keyframes busPulse {
+  0%, 100% { transform: translateX(-2px); opacity: 0.6; }
+  50% { transform: translateX(2px); opacity: 1; }
+}
+.dyn-alu-block {
+  text-align: center;
+  border-color: rgba(34, 211, 238, 0.3);
+  transition: all 0.3s;
+}
+.dyn-alu-block.alu-pulse {
+  border-color: var(--cyan);
+  background: rgba(34, 211, 238, 0.12);
+  box-shadow: 0 0 15px rgba(34, 211, 238, 0.25);
+  animation: aluPulse 0.8s ease-in-out infinite alternate;
+}
+@keyframes aluPulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.02); }
+}
+.dyn-alu-symbol {
+  font-size: 1.2rem;
+  color: var(--cyan);
+  line-height: 1;
+}
+.dyn-alu-op {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--yellow);
+  margin: 0.15rem 0;
+}
+.dyn-alu-expr {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+.dyn-alu-out {
+  margin-top: 0.35rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  padding: 0.2rem 0.4rem;
+  background: var(--bg);
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  color: var(--green);
+}
+.dyn-flags-block {
+  border-color: rgba(74, 222, 128, 0.3);
+}
+.dyn-flags-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.35rem;
+}
+.dyn-flag-badge {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0.45rem;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  border: 1px solid var(--border);
+}
+.dyn-flag-badge.flag-high {
+  background: rgba(74, 222, 128, 0.2);
+  border-color: rgba(74, 222, 128, 0.5);
+  color: var(--green);
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.3);
+}
+.dyn-flag-badge.flag-low {
+  background: rgba(71, 85, 105, 0.15);
+  color: var(--text-muted);
+}
+.dyn-flag-desc {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  margin-top: 0.4rem;
+  font-style: italic;
+}
+.dyn-cpu-status-bar {
+  margin-top: 0.6rem;
+  padding: 0.4rem 0.65rem;
+  background: var(--bg3);
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-family: var(--mono);
+  color: var(--text-dim);
+  border-left: 3px solid var(--cyan);
+}
+
+/* ===== RIPPLE CARRY ADDER (RCA-4) STYLING ===== */
+.dyn-rca-chain {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  overflow-x: auto;
+  padding: 0.5rem 0;
+}
+.dyn-fa-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.5rem;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  min-width: 85px;
+  transition: all 0.3s;
+}
+.dyn-fa-stage.stage-current {
+  border-color: var(--cyan);
+  background: rgba(34, 211, 238, 0.12);
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.35);
+  transform: scale(1.04);
+}
+.dyn-fa-stage.stage-done {
+  border-color: rgba(74, 222, 128, 0.4);
+  background: rgba(74, 222, 128, 0.05);
+}
+.dyn-fa-inputs {
+  display: flex;
+  gap: 0.25rem;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+}
+.dyn-fa-pin {
+  background: var(--bg);
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+.dyn-fa-pin b {
+  color: var(--text);
+}
+.dyn-fa-box {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.35rem;
+  text-align: center;
+}
+.dyn-fa-title {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--cyan);
+}
+.dyn-fa-cin-badge, .dyn-fa-cout-badge {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+.dyn-fa-outputs {
+  font-family: var(--mono);
+  font-size: 0.74rem;
+}
+.dyn-fa-sum-pin {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--yellow);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  font-weight: 700;
+}
+.dyn-carry-conn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 45px;
+}
+.dyn-carry-arrow {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+  transition: all 0.3s;
+}
+.dyn-carry-wire {
+  width: 100%;
+  height: 2px;
+  background: var(--border);
+  transition: all 0.3s;
+}
+.dyn-carry-conn.carry-flowing .dyn-carry-arrow {
+  color: var(--green);
+  text-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
+}
+.dyn-carry-conn.carry-flowing .dyn-carry-wire {
+  background: #4ade80;
+  box-shadow: 0 0 10px #4ade80;
+}
+.dyn-final-cout, .dyn-initial-cin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+}
+.dyn-cout-bubble, .dyn-cin-bubble {
+  padding: 0.3rem 0.55rem;
+  border-radius: 6px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  font-weight: 700;
+}
+.dyn-cout-pin-label {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  margin-bottom: 0.2rem;
+}
+.cout-active .dyn-cout-bubble {
+  background: rgba(248, 113, 113, 0.2);
+  border-color: var(--red);
+  color: var(--red);
+  box-shadow: 0 0 10px rgba(248, 113, 113, 0.4);
+}
+.dyn-delay-tag {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--yellow);
+  background: rgba(251, 191, 36, 0.1);
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+}
+.dyn-rca-telemetry {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  color: var(--text-dim);
+  padding: 0.35rem 0.6rem;
+  background: var(--bg3);
+  border-radius: 6px;
+}
+
+/* ===== BOOTH'S SHIFT REGISTER STYLING ===== */
+.dyn-booth-matrix, .dyn-div-matrix {
+  display: grid;
+  grid-template-columns: 1.2fr 1.2fr 0.8fr;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+.dyn-div-matrix {
+  grid-template-columns: 1.2fr 1.2fr 1fr;
+}
+@media(max-width: 600px) {
+  .dyn-booth-matrix, .dyn-div-matrix {
+    grid-template-columns: 1fr;
+  }
+}
+.dyn-reg-column {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.55rem;
+  text-align: center;
+  transition: all 0.3s;
+}
+.dyn-reg-column.col-glow {
+  border-color: var(--yellow);
+  background: rgba(251, 191, 36, 0.1);
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.25);
+}
+.dyn-reg-column.col-restore {
+  border-color: var(--red);
+  background: rgba(248, 113, 113, 0.1);
+  box-shadow: 0 0 12px rgba(248, 113, 113, 0.25);
+}
+.dyn-col-header {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  margin-bottom: 0.35rem;
+}
+.dyn-col-header small {
+  color: var(--text-muted);
+}
+.dyn-bit-cells-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  margin: 0.25rem 0;
+}
+.spotlight-q0 {
+  border-color: var(--yellow) !important;
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+  transform: scale(1.1);
+}
+.spotlight-qm1 {
+  border-color: var(--cyan) !important;
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.5);
+  transform: scale(1.1);
+}
+.dyn-reg-numeric {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+.dyn-booth-hud {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.45rem 0.7rem;
+  margin-bottom: 0.4rem;
+}
+.dyn-hud-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+.dyn-hud-bits {
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  color: var(--yellow);
+  font-weight: 700;
+}
+.dyn-hud-arrow {
+  color: var(--cyan);
+  font-weight: 700;
+}
+.dyn-hud-action {
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  color: var(--text);
+}
+.dyn-shift-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.65rem;
+  background: rgba(34, 211, 238, 0.1);
+  border: 1px solid rgba(34, 211, 238, 0.3);
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-family: var(--mono);
+  color: var(--cyan);
+}
+.dyn-shift-arrows {
+  font-weight: 800;
+  animation: busPulse 0.8s infinite;
+}
+.dyn-div-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  background: var(--bg3);
+  border-radius: 8px;
+  border-left: 3px solid var(--green);
+  font-family: var(--mono);
+  font-size: 0.74rem;
+}
+
+/* ===== NUMBER SYSTEMS INTERACTIVE BIT STRIP ===== */
+.dyn-interactive-bitstrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  margin: 0.5rem 0;
+}
+.dyn-bit-flipper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.25rem 0.4rem;
+  cursor: pointer;
+  user-select: none;
+  min-width: 36px;
+  transition: all 0.2s;
+}
+.dyn-bit-flipper:hover {
+  transform: translateY(-2px);
+  border-color: var(--cyan);
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.3);
+}
+.dyn-bit-flipper.scanner-active {
+  border-color: var(--yellow) !important;
+  background: rgba(251, 191, 36, 0.18) !important;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.4);
+  transform: scale(1.08);
+}
+.dyn-flipper-pos {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+}
+.dyn-flipper-val {
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  font-weight: 800;
+  margin: 0.1rem 0;
+}
+.bit-is-1 .dyn-flipper-val {
+  color: var(--green);
+}
+.bit-is-0 .dyn-flipper-val {
+  color: var(--text-muted);
+}
+.dyn-flipper-weight {
+  font-size: 0.62rem;
+  font-family: var(--mono);
+  color: var(--cyan);
+}
+.dyn-scanner-telemetry {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  color: var(--text-dim);
+  padding: 0.35rem 0.6rem;
+  background: var(--bg3);
+  border-radius: 6px;
+}
+.dyn-scanner-hint {
+  font-size: 0.68rem;
+  color: var(--cyan);
+  font-style: italic;
+}
+
+/* ===== LOGIC GATES DYNAMIC WIRES & HIGHLIGHTS ===== */
+.wire-on {
+  stroke: #4ade80 !important;
+  stroke-width: 2.5 !important;
+  stroke-dasharray: 6 3;
+  animation: wireFlow 0.8s linear infinite;
+  filter: drop-shadow(0 0 5px rgba(74, 222, 128, 0.7));
+}
+.wire-off {
+  stroke: #475569 !important;
+  stroke-width: 1.5 !important;
+}
+@keyframes wireFlow {
+  from { stroke-dashoffset: 9; }
+  to { stroke-dashoffset: 0; }
+}
+.dyn-gate-interactive-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  flex-wrap: wrap;
+}
+.dyn-gate-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.dyn-gate-btn:hover {
+  border-color: var(--green);
+}
+.dyn-gate-btn.gate-btn-high {
+  background: rgba(74, 222, 128, 0.2);
+  border-color: var(--green);
+  color: var(--green);
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.3);
+}
+
+/* ===== KARATSUBA DYNAMICS ===== */
+.dyn-kara-split-grid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+.dyn-kara-node {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  text-align: center;
+}
+.dyn-node-lbl {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+.dyn-node-split {
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  color: var(--cyan);
+}
+.dyn-kara-mult-sign {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--yellow);
+}
+.dyn-kara-triad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.dyn-kara-sub {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  text-align: center;
+  transition: all 0.3s;
+}
+.dyn-kara-sub.sub-glow {
+  border-color: var(--yellow);
+  background: rgba(251, 191, 36, 0.15);
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+}
+.dyn-sub-lbl {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+.dyn-sub-val {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--yellow);
+}
+.dyn-kara-formula {
+  background: var(--bg3);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+/* ===== STEP ACTIVE HIGHLIGHT ===== */
+.step-active {
+  background: rgba(34, 211, 238, 0.12) !important;
+  border-left: 3px solid var(--cyan) !important;
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.2);
+  border-radius: 4px;
+}
+.algo-highlight-active {
+  background: rgba(251, 191, 36, 0.25) !important;
+  color: #fff !important;
+  box-shadow: inset 0 0 12px rgba(251, 191, 36, 0.3);
+  font-weight: 700;
+}
+
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="header">
+  <h1>⚡ COA Lab Simulator</h1>
+  <p>Computer Organization &amp; Architecture — Interactive Step-by-Step Visualizations</p>
+  <div class="header-badges">
+    <span class="badge badge-purple">🖥 8086 Microprocessor</span>
+    <span class="badge badge-cyan">🔢 Number Systems</span>
+    <span class="badge badge-green">⚙ Arithmetic Operations</span>
+  </div>
+</header>
+
+<!-- ===== TABS ===== -->
+<div class="tabs-wrapper">
+  <div class="tabs">
+    <button class="tab-btn active-purple" onclick="switchTab('t1',this,'active-purple')">🖥 8086 Microprocessor</button>
+    <button class="tab-btn" onclick="switchTab('t2',this,'active-cyan')">🔢 Number Systems</button>
+    <button class="tab-btn" onclick="switchTab('t3',this,'active-green')">⚙ Arithmetic Operations</button>
+  </div>
+
+<!-- ===== DYNAMICS GLOBAL TOOLBAR ===== -->
+<div class="dyn-global-bar">
+  <div class="dyn-global-inner">
+    <div class="dyn-global-group">
+      <div class="dyn-clock-indicator" id="dynClockBox">
+        <span class="dyn-clock-led" id="globalClockLed"></span>
+        <span id="globalClockText">CLK: 1.5 Hz</span>
+      </div>
+      <div class="dyn-mode-toggle">
+        <button class="dyn-mode-btn active" id="btnModeStep" onclick="setGlobalMode('step')">🎬 Step Dynamics</button>
+        <button class="dyn-mode-btn" id="btnModeInstant" onclick="setGlobalMode('instant')">⚡ Instant All</button>
+      </div>
+    </div>
+    <div class="dyn-global-group">
+      <select class="dyn-select" id="globalSpeedSel" onchange="setGlobalSpeed(this.value)" title="Simulation step speed">
+        <option value="1400">0.5x Slow (1.4s)</option>
+        <option value="750" selected>1.0x Normal (750ms)</option>
+        <option value="350">2.0x Fast (350ms)</option>
+        <option value="150">5.0x Turbo (150ms)</option>
+      </select>
+      <button class="dyn-sound-btn" id="btnGlobalSound" onclick="toggleGlobalSound()" title="Toggle Web Audio synthesized sound FX">
+        <span id="soundIcon">🔇</span> Audio: <span id="soundText">OFF</span>
+      </button>
+      <button class="dyn-action-btn" onclick="playAllInActiveTab()" title="Auto-play all simulations in current tab">▶ Play Tab</button>
+      <button class="dyn-action-btn" onclick="resetAllInActiveTab()" title="Reset all in current tab">↺ Reset Tab</button>
+    </div>
+  </div>
+</div>
+
+
+</div>
+
+<!-- ===== CONTENT ===== -->
+<div class="content">
+
+<!-- ==================== TAB 1: 8086 ==================== -->
+<div id="t1" class="tab-panel active">
+  <div class="section-title"><span style="color:var(--purple)">📋 8086 Microprocessor Simulations</span></div>
+  <div class="grid">
+
+    <!-- 1. 8-bit Addition -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num card-num-purple">1</div>
+        <div class="card-title">8-bit Addition — ADD instruction</div>
+      </div>
+      <div class="card-body">
+        <div class="inputs-row">
+          <div class="input-grp"><label>Operand A (0–255)</label><input id="a8add_a" class="inp inp-sm" type="number" value="185" min="0" max="255"/></div>
+          <div class="input-grp"><label>Operand B (0–255)</label><input id="a8add_b" class="inp inp-sm" type="number" value="140" min="0" max="255"/></div>
+          <button class="btn btn-purple" onclick="sim8bitAdd()">▶ Simulate</button>
+        </div>
+        <div class="output" id="a8add_out"></div>
+      </div>
+    </div>
+
+    <!-- 2. 8-bit Subtraction -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num card-num-purple">2</div>
+        <div class="card-title">8-bit Subtraction — SUB instruction</div>
+      </div>
+      <div class="card-body">
+        <div class="inputs-row">
+          <div class="input-grp"><label>Operand A (0–255)</label><input id="a8sub_a" class="inp inp-sm" type="number" value="200" min="0" max="255"/></div>
+          <div class="input-grp"><label>Operand B (0–255)</label><input id="a8sub_b" class="inp inp-sm" type="number" value="85" min="0" max="255"/></div>
+          <button class="btn btn-purple" onclick="sim8bitSub()">▶ Simulate</button>
+        </div>
+        <div class="output" id="a8sub_out"></div>
+      </div>
+    </div>
+
+    <!-- 3. 16-bit Addition -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num card-num-purple">3</div>
+        <div class="card-title">16-bit Addition — ADD AX, BX</div>
+      </div>
+      <div class="card-body">
+        <div class="inputs-row">
+          <div class="input-grp"><label>AX (0–65535)</label><input id="a16add_a" class="inp" type="number" value="52000" min="0" max="65535"/></div>
+          <div class="input-grp"><label>BX (0–65535)</label><input id="a16add_b" class="inp" type="number" value="20000" min="0" max="65535"/></div>
+          <button class="btn btn-purple" onclick="sim16bitAdd()">▶ Simulate</button>
+        </div>
+        <div class="output" id="a16add_out"></div>
+      </div>
+    </div>
+
+    <!-- 4. 8-bit Multiplication -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num card-num-purple">4</div>
+        <div class="card-title">8-bit Multiplication — MUL BL</div>
+      </div>
+      <div class="card-body">
+        <div class="inputs-row">
+          <div class="input-grp"><label>AL (0–255)</label><input id="a8mul_a" class="inp inp-sm" type="number" value="25" min="0" max="255"/></div>
+          <div class="input-grp"><label>BL (0–255)</label><input id="a8mul_b" class="inp inp-sm" type="number" value="12" min="0" max="255"/></div>
+          <button class="btn btn-purple" onclick="sim8bitMul()">▶ Simulate</button>
+        </div>
+        <div class="output" id="a8mul_out"></div>
+      </div>
+    </div>
+
+    <!-- 5. 8-bit Division -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num card-num-purple">5</div>
+        <div class="card-title">8-bit Division — DIV BL</div>
+      </div>
+      <div class="card-body">
+        <div class="inputs-row">
+          <div class="input-grp"><label>AX dividend (0–65535)</label><input id="a8div_a" class="inp" type="number" value="250" min="0" max="65535"/></div>
+          <div class="input-grp"><label>BL divisor (1–255)</label><input id="a8div_b" class="inp inp-sm" type="number" value="7" min="1" max="255"/></div>
+          <button class="btn btn-purple" onclick="sim8bitDiv()">▶ Simulate</button>
+        </div>
+        <div class="output" id="a8div_out"></div>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+</div><!-- /t1 -->
+
+<!-- ==================== TAB 2: NUMBER SYSTEMS ==================== -->
+<div id="t2" class="tab-panel">
+  <div class="section-title"><span style="color:var(--cyan)">🔢 Number System Conversions</span></div>
+  <div class="grid">
+
+    <!-- 6. Binary → Decimal -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num card-num-cyan">6</div>
+        <div class="card-title">Binary → Decimal</div>
+      </div>
+      <div class="card-body">
+        <div class="inputs-row">
+          <div class="input-grp"><label>Binary String</label><input id="bd_in" class="inp" type="text" value="11010110" maxlength="16"/></div>
+          <button class="btn btn-cyan" onclick="simBinDec()">▶ Simulate</button>
+        </div>
+        <div class="output" id="bd_out"></div>
+      </div>
+    </div>
+
+    <!-- 7. Binary → Octal -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num card-num-cyan">7</div>
+        <div class="card-title">Binary → Octal</div>
+      </div>
+      <div class="card-body">
+        <div class="inputs-row">
+          <div class="input-grp"><label>Binary String</label><input id="bo_in" class="inp" type="text" value="11010110" maxlength="24"/></div>
+          <button class="btn btn-cyan" onclick="simBinOct()">▶ Simulate</button>
+        </div>
+        <div class="output" id="bo_out"></div>
+      </div>
+    </div>
+
+    <!-- 8. Binary → Hex -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num card-num-cyan">8</div>
+        <div class="card-title">Binary → Hexadecimal</div>
+      </div>
+      <div class="card-body">
+        <div class="inputs-row">
+          <div class="input-grp"><label>Binary String</label><input id="bh_in" class="inp" type="text" value="11010110" maxlength="32"/></div>
+          <button class="btn btn-cyan" onclick="simBinHex()">▶ Simulate</button>
+        </div>
+        <div class="output" id="bh_out"></div>
+      </div>
+    </div>
+
+    <!-- 9. Binary → Gray -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num card-num-cyan">9</div>
+        <div class="card-title">Binary → Gray Code</div>
+      </div>
+      <div class="card-body">
+        <div class="inputs-row">
+          <div class="input-grp"><label>Binary String</label><input id="bg_in" class="inp" type="text" value="1011" maxlength="16"/></div>
+          <button class="btn btn-cyan" onclick="simBinGray()">▶ Simulate</button>
+        </div>
+        <div class="output" id="bg_out"></div>
+      </div>
+    </div>
+
+    <!-- 10. Gray → Binary -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num card-num-cyan">10</div>
+        <div class="card-title">Gray Code → Binary</div>
+      </div>
+      <div class="card-body">
+        <div class="inputs-row">
+          <div class="input-grp"><label>Gray Code</label><input id="gb_in" class="inp" type="text" value="1110" maxlength="16"/></div>
+          <button class="btn btn-cyan" onclick="simGrayBin()">▶ Simulate</button>
+        </div>
+        <div class="output" id="gb_out"></div>
+      </div>
+    </div>
+
+    <!-- 11. 1's Complement -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num card-num-cyan">11</div>
+        <div class="card-title">1's Complement</div>
+      </div>
+      <div class="card-body">
+        <div class="inputs-row">
+          <div class="input-grp"><label>Binary String</label><input id="ones_in" class="inp" type="text" value="10110100" maxlength="16"/></div>
+          <button class="btn btn-cyan" onclick="simOnesComp()">▶ Simulate</button>
+        </div>
+        <div class="output" id="ones_out"></div>
+      </div>
+    </div>
+
+    <!-- 12. 2's Complement -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num card-num-cyan">12</div>
+        <div class="card-title">2's Complement</div>
+      </div>
+      <div class="card-body">
+        <div class="inputs-row">
+          <div class="input-grp"><label>Binary String</label><input id="twos_in" class="inp" type="text" value="10110100" maxlength="16"/></div>
+          <button class="btn btn-cyan" onclick="simTwosComp()">▶ Simulate</button>
+        </div>
+        <div class="output" id="twos_out"></div>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+</div><!-- /t2 -->
+
+<!-- ==================== TAB 3: ARITHMETIC OPS ==================== -->
+<div id="t3" class="tab-panel">
+  <div class="section-title"><span style="color:var(--green)">⚙ Arithmetic Operations &amp; Algorithms</span></div>
+  <div class="grid">
+
+    <!-- 13. Half Adder -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num card-num-green">13</div>
+        <div class="card-title">Half Adder</div>
+      </div>
+      <div class="card-body">
+        <div class="inputs-row">
+          <div class="input-grp"><label>A</label>
+            <select id="ha_a" class="inp inp-sm" style="width:60px">
+              <option>0</option><option selected>1</option>
+            </select>
+          </div>
+          <div class="input-grp"><label>B</label>
+            <select id="ha_b" class="inp inp-sm" style="width:60px">
+              <option>0</option><option selected>1</option>
+            </select>
+          </div>
+          <button class="btn btn-green" onclick="simHalfAdder()">▶ Simulate</button>
+        </div>
+        <div class="output" id="ha_out"></div>
+      </div>
+    </div>
+
+    <!-- 14. Full Adder -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num card-num-green">14</div>
+        <div class="card-title">Full Adder</div>
+      </div>
+      <div class="card-body">
+        <div class="inputs-row">
+          <div class="input-grp"><label>A</label>
+            <select id="fa_a" class="inp inp-sm" style="width:60px">
+              <option>0</option><option selected>1</option>
+            </select>
+          </div>
+          <div class="input-grp"><label>B</label>
+            <select id="fa_b" class="inp inp-sm" style="width:60px">
+              <option>0</option><option selected>1</option>
+            </select>
+          </div>
+          <div class="input-grp"><label>Cin</label>
+            <select id="fa_c" class="inp inp-sm" style="width:60px">
+              <option>0</option><option selected>1</option>
+            </select>
+          </div>
+          <button class="btn btn-green" onclick="simFullAdder()">▶ Simulate</button>
+        </div>
+        <div class="output" id="fa_out"></div>
+      </div>
+    </div>
+
+    <!-- 15. Ripple Carry Adder -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num card-num-green">15</div>
+        <div class="card-title">4-bit Ripple Carry Adder</div>
+      </div>
+      <div class="card-body">
+        <div class="inputs-row">
+          <div class="input-grp"><label>A (0–15)</label><input id="rca_a" class="inp inp-sm" type="number" value="13" min="0" max="15"/></div>
+          <div class="input-grp"><label>B (0–15)</label><input id="rca_b" class="inp inp-sm" type="number" value="11" min="0" max="15"/></div>
+          <div class="input-grp"><label>Cin</label>
+            <select id="rca_c" class="inp inp-sm" style="width:60px">
+              <option selected>0</option><option>1</option>
+            </select>
+          </div>
+          <button class="btn btn-green" onclick="simRCA()">▶ Simulate</button>
+        </div>
+        <div class="output" id="rca_out"></div>
+      </div>
+    </div>
+
+    <!-- 16. Booth's Algorithm -->
+    <div class="card" style="grid-column:1/-1">
+      <div class="card-header">
+        <div class="card-num card-num-green">16</div>
+        <div class="card-title">Booth's Algorithm (Binary Multiplication)</div>
+      </div>
+      <div class="card-body">
+        <div class="inputs-row">
+          <div class="input-grp"><label>Multiplicand M (−8 to 7)</label><input id="booth_m" class="inp" type="number" value="6" min="-8" max="7"/></div>
+          <div class="input-grp"><label>Multiplier Q (−8 to 7)</label><input id="booth_q" class="inp" type="number" value="-3" min="-8" max="7"/></div>
+          <div class="input-grp"><label>Bits (4 or 5)</label>
+            <select id="booth_bits" class="inp inp-sm" style="width:70px">
+              <option selected>4</option><option>5</option>
+            </select>
+          </div>
+          <button class="btn btn-green" onclick="simBooth()">▶ Simulate</button>
+        </div>
+        <div class="output" id="booth_out"></div>
+      </div>
+    </div>
+
+    <!-- 17. Fast Multiplication (Karatsuba) -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num card-num-green">17</div>
+        <div class="card-title">Fast Multiplication (Karatsuba)</div>
+      </div>
+      <div class="card-body">
+        <div class="inputs-row">
+          <div class="input-grp"><label>Number A</label><input id="kara_a" class="inp" type="number" value="1234"/></div>
+          <div class="input-grp"><label>Number B</label><input id="kara_b" class="inp" type="number" value="5678"/></div>
+          <button class="btn btn-green" onclick="simKaratsuba()">▶ Simulate</button>
+        </div>
+        <div class="output" id="kara_out"></div>
+      </div>
+    </div>
+
+    <!-- 18. Restoring Division -->
+    <div class="card" style="grid-column:1/-1">
+      <div class="card-header">
+        <div class="card-num card-num-green">18</div>
+        <div class="card-title">Restoring Division Algorithm</div>
+      </div>
+      <div class="card-body">
+        <div class="inputs-row">
+          <div class="input-grp"><label>Dividend (0–15)</label><input id="res_div" class="inp inp-sm" type="number" value="13" min="0" max="15"/></div>
+          <div class="input-grp"><label>Divisor (1–15)</label><input id="res_dvs" class="inp inp-sm" type="number" value="3" min="1" max="15"/></div>
+          <button class="btn btn-green" onclick="simRestoring()">▶ Simulate</button>
+        </div>
+        <div class="output" id="res_out"></div>
+      </div>
+    </div>
+
+    <!-- 19. Non-Restoring Division -->
+    <div class="card" style="grid-column:1/-1">
+      <div class="card-header">
+        <div class="card-num card-num-green">19</div>
+        <div class="card-title">Non-Restoring Division Algorithm</div>
+      </div>
+      <div class="card-body">
+        <div class="inputs-row">
+          <div class="input-grp"><label>Dividend (0–15)</label><input id="nres_div" class="inp inp-sm" type="number" value="13" min="0" max="15"/></div>
+          <div class="input-grp"><label>Divisor (1–15)</label><input id="nres_dvs" class="inp inp-sm" type="number" value="3" min="1" max="15"/></div>
+          <button class="btn btn-green" onclick="simNonRestoring()">▶ Simulate</button>
+        </div>
+        <div class="output" id="nres_out"></div>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+</div><!-- /t3 -->
+
+</div><!-- /content -->
+
+<script>
+
+/* ===================================================
+   UTILITY FUNCTIONS
+   =================================================== */
+function $(id){return document.getElementById(id)}
+function clamp(v,lo,hi){return Math.min(hi,Math.max(lo,v))}
+
+function bitsHTML(str){
+  return str.split('').map(b=>
+    `<span class="bit-box bit-box-${b}">${b}</span>`
+  ).join('');
+}
+
+function padBin(n,bits){
+  let s=(n>>>0).toString(2);
+  while(s.length<bits)s='0'+s;
+  return s.slice(-bits);
+}
+
+function padHex(n,chars){
+  let s=(n>>>0).toString(16).toUpperCase();
+  while(s.length<chars)s='0'+s;
+  return s.slice(-chars);
+}
+
+function signedFromBin(s){
+  const n=s.length;
+  if(s[0]==='0') return parseInt(s,2);
+  return parseInt(s,2)-(1<<n);
+}
+
+function signedToBin(v,n){
+  if(v>=0) return padBin(v,n);
+  let u=(1<<n)+v;
+  return padBin(u,n);
+}
+
+function stepHead(txt){return `<div class="step"><span class="step-title">${txt}</span></div>`;}
+function stepRow(label,val,note=''){
+  return `<div class="step"><span class="step-label">${label}</span>${val}${note?`<span class="step-note">&nbsp;←&nbsp;${note}</span>`:''}</div>`;
+}
+function sep(){return `<div class="step"><div class="step-sep"></div></div>`;}
+
+function switchTab(id,btn,cls){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active-purple','active-cyan','active-green'));
+  $(id).classList.add('active');
+  btn.classList.add(cls);
+}
+
+/* ===================================================
+   SOUND EFFECTS SYNTHESIZER (WEB AUDIO API)
+   =================================================== */
+const SoundFX = {
+  ctx: null,
+  enabled: false,
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+  },
+  playTone(freq, type='sine', duration=0.08, vol=0.04) {
+    if (!this.enabled) return;
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+      gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + duration);
+    } catch(e){}
+  },
+  tick() { this.playTone(700, 'square', 0.025, 0.02); },
+  flip() { this.playTone(520, 'triangle', 0.05, 0.03); },
+  alu() { this.playTone(440, 'sine', 0.08, 0.04); },
+  success() {
+    this.playTone(523.25, 'sine', 0.08, 0.04);
+    setTimeout(() => this.playTone(659.25, 'sine', 0.08, 0.04), 80);
+    setTimeout(() => this.playTone(783.99, 'sine', 0.12, 0.04), 160);
+  },
+  warn() { this.playTone(220, 'sawtooth', 0.15, 0.05); }
+};
+
+/* ===================================================
+   MASTER CLOCK GENERATOR
+   =================================================== */
+const ClockGen = {
+  led: null,
+  state: 0,
+  timer: null,
+  init() {
+    this.led = $('globalClockLed');
+    if (this.timer) clearInterval(this.timer);
+    this.timer = setInterval(() => this.pulse(), 667);
+  },
+  setSpeed(ms) {
+    if (this.timer) clearInterval(this.timer);
+    const interval = Math.max(120, Math.floor(ms * 0.7));
+    const hz = (1000 / interval).toFixed(1);
+    const txt = $('globalClockText');
+    if (txt) txt.textContent = `CLK: ${hz} Hz`;
+    this.timer = setInterval(() => this.pulse(), interval);
+  },
+  pulse() {
+    this.state = 1 - this.state;
+    if (this.led) {
+      if (this.state) {
+        this.led.classList.add('pulse');
+      } else {
+        this.led.classList.remove('pulse');
+      }
+    }
+  }
+};
+
+/* ===================================================
+   DYNAMIC SIMULATION PLAYER & ENGINE
+   =================================================== */
+class SimPlayer {
+  constructor(cardId) {
+    this.cardId = cardId;
+    this.steps = [];
+    this.title = '';
+    this.renderVisual = null;
+    this.currentStep = 0;
+    this.isPlaying = false;
+    this.timer = null;
+    this.speed = 750;
+    this.theme = 'purple';
+    this.initialized = false;
+  }
+
+  init(spec) {
+    this.steps = spec.steps || [];
+    this.title = spec.title || '';
+    this.renderVisual = spec.renderVisual || null;
+    this.theme = spec.theme || 'purple';
+    this.speed = DynamicsEngine.globalSpeed;
+
+    this.mount();
+
+    if (DynamicsEngine.globalMode === 'instant') {
+      this.instant();
+    } else {
+      this.reset();
+      // Auto-play if requested or user initiated simulate
+      if (spec.autoPlay) {
+        this.play();
+      }
+    }
+    this.initialized = true;
+  }
+
+  mount() {
+    const out = $(this.cardId + '_out');
+    if (!out) return;
+
+    out.innerHTML = `
+      <div class="dyn-player" id="player_${this.cardId}">
+        <div class="dyn-controls">
+          <button class="dyn-ctrl-btn" onclick="DynamicsEngine.prev('${this.cardId}')" title="Previous Step">⏮ Prev</button>
+          <button class="dyn-ctrl-btn btn-play" id="btn_play_${this.cardId}" onclick="DynamicsEngine.togglePlay('${this.cardId}')" title="Play or Pause">▶ Play</button>
+          <button class="dyn-ctrl-btn" onclick="DynamicsEngine.next('${this.cardId}')" title="Next Step">⏭ Next</button>
+          <button class="dyn-ctrl-btn" onclick="DynamicsEngine.reset('${this.cardId}')" title="Reset to start">↺ Reset</button>
+          <button class="dyn-ctrl-btn btn-instant" onclick="DynamicsEngine.instant('${this.cardId}')" title="Instant Final Result">⚡ Instant</button>
+          <div class="dyn-ctrl-spacer"></div>
+          <div class="dyn-step-counter" id="step_cnt_${this.cardId}">Step 0 / ${this.steps.length}</div>
+        </div>
+        <div class="dyn-progress-wrap">
+          <div class="dyn-progress-fill" id="prog_fill_${this.cardId}"></div>
+        </div>
+        <div class="dyn-visual-stage" id="stage_${this.cardId}"></div>
+        <div class="dyn-log-container" id="log_${this.cardId}"></div>
+      </div>
+    `;
+  }
+
+  renderStep(idx) {
+    if (this.steps.length === 0) return;
+    this.currentStep = clamp(idx, 0, this.steps.length - 1);
+    const step = this.steps[this.currentStep];
+    const total = this.steps.length;
+
+    // Update Counter & Progress
+    const cnt = $('step_cnt_' + this.cardId);
+    if (cnt) cnt.textContent = `Step ${this.currentStep + 1} / ${total}`;
+    const fill = $('prog_fill_' + this.cardId);
+    if (fill) fill.style.width = `${((this.currentStep + 1) / total) * 100}%`;
+
+    // Visual Stage
+    const stage = $('stage_' + this.cardId);
+    if (stage && this.renderVisual) {
+      const isFinal = this.currentStep === total - 1;
+      this.renderVisual(stage, step.state, this.currentStep, total, isFinal);
+    }
+
+    // Step Log
+    const log = $('log_' + this.cardId);
+    if (log) {
+      let html = '';
+      for (let i = 0; i <= this.currentStep; i++) {
+        const s = this.steps[i];
+        const isActive = i === this.currentStep;
+        html += `<div class="step ${isActive ? 'step-active' : ''}">${s.html}</div>`;
+      }
+      log.innerHTML = html;
+    }
+
+    // Sound
+    if (this.currentStep === total - 1) {
+      SoundFX.success();
+    } else {
+      SoundFX.alu();
+    }
+  }
+
+  play() {
+    if (this.isPlaying) return;
+    if (this.currentStep >= this.steps.length - 1) {
+      this.currentStep = -1;
+    }
+    this.isPlaying = true;
+    const btn = $('btn_play_' + this.cardId);
+    if (btn) {
+      btn.innerHTML = '⏸ Pause';
+      btn.classList.add('btn-play-active');
+    }
+
+    if (this.currentStep < 0) {
+      this.currentStep = 0;
+      this.renderStep(0);
+    }
+
+    if (this.timer) clearInterval(this.timer);
+    this.timer = setInterval(() => {
+      if (this.currentStep < this.steps.length - 1) {
+        this.next();
+      } else {
+        this.pause();
+      }
+    }, this.speed);
+  }
+
+  pause() {
+    this.isPlaying = false;
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+    const btn = $('btn_play_' + this.cardId);
+    if (btn) {
+      btn.innerHTML = this.currentStep >= this.steps.length - 1 ? '▶ Replay' : '▶ Play';
+      btn.classList.remove('btn-play-active');
+    }
+  }
+
+  next() {
+    if (this.currentStep < this.steps.length - 1) {
+      this.renderStep(this.currentStep + 1);
+    } else {
+      this.pause();
+    }
+  }
+
+  prev() {
+    this.pause();
+    if (this.currentStep > 0) {
+      this.renderStep(this.currentStep - 1);
+    }
+  }
+
+  reset() {
+    this.pause();
+    this.renderStep(0);
+  }
+
+  instant() {
+    this.pause();
+    this.renderStep(this.steps.length - 1);
+  }
+}
+
+const DynamicsEngine = {
+  players: {},
+  globalMode: 'step',
+  globalSpeed: 750,
+
+  register(cardId, spec) {
+    if (!this.players[cardId]) {
+      this.players[cardId] = new SimPlayer(cardId);
+    }
+    const p = this.players[cardId];
+    p.init(spec);
+    return p;
+  },
+
+  getPlayer(cardId) {
+    return this.players[cardId];
+  },
+
+  togglePlay(cardId) {
+    const p = this.players[cardId];
+    if (!p) return;
+    if (p.isPlaying) p.pause();
+    else p.play();
+  },
+
+  next(cardId) {
+    const p = this.players[cardId];
+    if (p) { p.pause(); p.next(); }
+  },
+
+  prev(cardId) {
+    const p = this.players[cardId];
+    if (p) { p.pause(); p.prev(); }
+  },
+
+  reset(cardId) {
+    const p = this.players[cardId];
+    if (p) p.reset();
+  },
+
+  instant(cardId) {
+    const p = this.players[cardId];
+    if (p) p.instant();
+  }
+};
+window.DynamicsEngine = DynamicsEngine;
+window.SoundFX = SoundFX;
+window.ClockGen = ClockGen;
+
+/* ===================================================
+   GLOBAL CONTROLS & INTERACTIVE HELPERS
+   =================================================== */
+function setGlobalMode(mode) {
+  DynamicsEngine.globalMode = mode;
+  $('btnModeStep').classList.toggle('active', mode === 'step');
+  $('btnModeInstant').classList.toggle('active', mode === 'instant');
+  if (mode === 'instant') {
+    Object.values(DynamicsEngine.players).forEach(p => p.instant());
+  }
+}
+
+function setGlobalSpeed(ms) {
+  const speed = parseInt(ms) || 750;
+  DynamicsEngine.globalSpeed = speed;
+  ClockGen.setSpeed(speed);
+  Object.values(DynamicsEngine.players).forEach(p => {
+    p.speed = speed;
+    if (p.isPlaying) {
+      p.pause();
+      p.play();
+    }
+  });
+}
+
+function toggleGlobalSound() {
+  SoundFX.init();
+  SoundFX.enabled = !SoundFX.enabled;
+  const btn = $('btnGlobalSound');
+  const icon = $('soundIcon');
+  const txt = $('soundText');
+  if (SoundFX.enabled) {
+    btn.classList.add('on');
+    icon.textContent = '🔊';
+    txt.textContent = 'ON';
+    SoundFX.success();
+  } else {
+    btn.classList.remove('on');
+    icon.textContent = '🔇';
+    txt.textContent = 'OFF';
+  }
+}
+
+function playAllInActiveTab() {
+  const activePanel = document.querySelector('.tab-panel.active');
+  if (!activePanel) return;
+  const outputs = activePanel.querySelectorAll('.output');
+  outputs.forEach((out, i) => {
+    const cardId = out.id.replace('_out', '');
+    const p = DynamicsEngine.getPlayer(cardId);
+    if (p) {
+      setTimeout(() => p.play(), i * 150);
+    }
+  });
+}
+
+function resetAllInActiveTab() {
+  const activePanel = document.querySelector('.tab-panel.active');
+  if (!activePanel) return;
+  const outputs = activePanel.querySelectorAll('.output');
+  outputs.forEach(out => {
+    const cardId = out.id.replace('_out', '');
+    const p = DynamicsEngine.getPlayer(cardId);
+    if (p) p.reset();
+  });
+}
+
+function toggleInputBit(inputId, bitIdx) {
+  const inp = $(inputId);
+  if (!inp) return;
+  let str = inp.value.trim();
+  if (bitIdx < 0 || bitIdx >= str.length) return;
+  const newBit = str[bitIdx] === '1' ? '0' : '1';
+  str = str.substring(0, bitIdx) + newBit + str.substring(bitIdx + 1);
+  inp.value = str;
+  SoundFX.flip();
+  
+  // Re-run simulation
+  const map = {
+    'bd_in': simBinDec,
+    'bo_in': simBinOct,
+    'bh_in': simBinHex,
+    'bg_in': simBinGray,
+    'gb_in': simGrayBin,
+    'ones_in': simOnesComp,
+    'twos_in': simTwosComp
+  };
+  if (map[inputId]) map[inputId]();
+}
+
+function toggleHAInput(which) {
+  const sel = $(which === 'a' ? 'ha_a' : 'ha_b');
+  if (sel) {
+    sel.value = sel.value === '1' ? '0' : '1';
+    SoundFX.flip();
+    simHalfAdder();
+  }
+}
+
+function toggleFAInput(which) {
+  const sel = $(which === 'a' ? 'fa_a' : (which === 'b' ? 'fa_b' : 'fa_c'));
+  if (sel) {
+    sel.value = sel.value === '1' ? '0' : '1';
+    SoundFX.flip();
+    simFullAdder();
+  }
+}
+
+/* ===================================================
+   VISUAL STAGE RENDERERS
+   =================================================== */
+
+// 1. 8086 Datapath Visualizer
+function render8086Datapath(container, state, isFinal) {
+  const is16 = state.is16;
+  const aluActive = state.phase === 'alu';
+  const busActive = state.phase === 'bus' || state.phase === 'alu' || state.phase === 'writeback';
+  const wbActive = state.phase === 'writeback' || state.phase === 'complete';
+
+  let axDisplay = is16
+    ? `<div class="dyn-reg-cell ${wbActive ? 'cell-flash' : ''}"><small>AX</small><b>${padHex(state.ax || 0, 4)}h</b><div class="dyn-reg-sub">${state.ax || 0}</div></div>`
+    : `<div class="dyn-reg-cell"><small>AH</small><b>${padHex((state.ax >> 8) & 0xFF, 2)}h</b></div>
+       <div class="dyn-reg-cell ${wbActive ? 'cell-flash' : ''}"><small>AL</small><b>${padHex(state.al !== undefined ? state.al : (state.ax & 0xFF), 2)}h</b><div class="dyn-reg-sub">${state.al !== undefined ? state.al : (state.ax & 0xFF)}</div></div>`;
+
+  let bxDisplay = is16
+    ? `<div class="dyn-reg-cell"><small>BX</small><b>${padHex(state.bx || 0, 4)}h</b><div class="dyn-reg-sub">${state.bx || 0}</div></div>`
+    : `<div class="dyn-reg-cell"><small>BH</small><b>${padHex((state.bx >> 8) & 0xFF, 2)}h</b></div>
+       <div class="dyn-reg-cell"><small>BL</small><b>${padHex(state.bl !== undefined ? state.bl : (state.bx & 0xFF), 2)}h</b><div class="dyn-reg-sub">${state.bl !== undefined ? state.bl : (state.bx & 0xFF)}</div></div>`;
+
+  container.innerHTML = `
+    <div class="dyn-cpu-diagram">
+      <div class="dyn-stage-header">
+        <span class="dyn-stage-tag"><span class="dyn-chip">8086 CPU</span> Internal Datapath</span>
+        <span class="dyn-phase-tag ${state.phase}">${state.phaseName || state.phase.toUpperCase()}</span>
+      </div>
+      
+      <div class="dyn-cpu-blocks">
+        <div class="dyn-block dyn-reg-block">
+          <div class="dyn-block-lbl">REGISTERS</div>
+          <div class="dyn-reg-box ${state.regAActive ? 'active-reg' : ''}">
+            <span class="dyn-reg-lbl">AX</span>
+            <div class="dyn-reg-row">${axDisplay}</div>
+          </div>
+          <div class="dyn-reg-box ${state.regBActive ? 'active-reg' : ''}">
+            <span class="dyn-reg-lbl">BX</span>
+            <div class="dyn-reg-row">${bxDisplay}</div>
+          </div>
+        </div>
+
+        <div class="dyn-bus-path ${busActive ? 'bus-flowing' : ''}">
+          <div class="dyn-bus-track">
+            <span class="dyn-bus-text">DATA BUS</span>
+            <div class="dyn-bus-arrow">➔</div>
+          </div>
+        </div>
+
+        <div class="dyn-block dyn-alu-block ${aluActive ? 'alu-pulse' : ''}">
+          <div class="dyn-block-lbl">ALU CORE</div>
+          <div class="dyn-alu-symbol">⚙</div>
+          <div class="dyn-alu-op">${state.aluOp || 'ADD'}</div>
+          <div class="dyn-alu-expr">${state.aluExpr || ''}</div>
+          <div class="dyn-alu-out">Output: <b>${state.aluOut !== undefined ? state.aluOut : '—'}</b></div>
+        </div>
+
+        <div class="dyn-block dyn-flags-block">
+          <div class="dyn-block-lbl">FLAGS REGISTER</div>
+          <div class="dyn-flags-row">
+            <div class="dyn-flag-badge ${state.cf ? 'flag-high' : 'flag-low'}">
+              <span>CF</span><b>${state.cf ? 1 : 0}</b>
+            </div>
+            <div class="dyn-flag-badge ${state.zf ? 'flag-high' : 'flag-low'}">
+              <span>ZF</span><b>${state.zf ? 1 : 0}</b>
+            </div>
+            <div class="dyn-flag-badge ${state.sf ? 'flag-high' : 'flag-low'}">
+              <span>SF</span><b>${state.sf ? 1 : 0}</b>
+            </div>
+            <div class="dyn-flag-badge ${state.of ? 'flag-high' : 'flag-low'}">
+              <span>OF</span><b>${state.of ? 1 : 0}</b>
+            </div>
+          </div>
+          <div class="dyn-flag-desc">${state.flagsDesc || 'Status flags update upon ALU execution'}</div>
+        </div>
+      </div>
+      <div class="dyn-cpu-status-bar">${state.statusDesc || ''}</div>
+    </div>
+  `;
+}
+
+// 2. Ripple Carry Adder (RCA-4) Visualizer
+function renderRCADatapath(container, state, isFinal) {
+  const stages = [3, 2, 1, 0];
+  let stagesHTML = '';
+
+  stages.forEach(i => {
+    const isCurrent = state.currentFA === i;
+    const isDone = (state.currentFA > i && state.currentFA !== -1) || isFinal || state.currentFA === -1;
+    const ai = state.aBits[i];
+    const bi = state.bBits[i];
+    const si = isDone || isCurrent ? state.sumBits[i] : '?';
+    const cin = state.carries[i];
+    const cout = state.carries[i + 1];
+
+    stagesHTML += `
+      <div class="dyn-fa-stage ${isCurrent ? 'stage-current' : (isDone ? 'stage-done' : 'stage-idle')}">
+        <div class="dyn-fa-inputs">
+          <span class="dyn-fa-pin">A[${i}]=<b>${ai}</b></span>
+          <span class="dyn-fa-pin">B[${i}]=<b>${bi}</b></span>
+        </div>
+        
+        <div class="dyn-fa-box">
+          <div class="dyn-fa-title">FA ${i}</div>
+          <div class="dyn-fa-cin-badge">Cin: ${cin}</div>
+          <div class="dyn-fa-cout-badge">Cout: ${isDone || isCurrent ? cout : '?'}</div>
+        </div>
+
+        <div class="dyn-fa-outputs">
+          <span class="dyn-fa-sum-pin">S[${i}]=<b>${si}</b></span>
+        </div>
+      </div>
+    `;
+
+    if (i > 0) {
+      const isRippleActive = state.currentFA === (i - 1);
+      const isCarryPassed = state.currentFA > (i - 1) || isFinal || state.currentFA === -1;
+      stagesHTML += `
+        <div class="dyn-carry-conn ${isRippleActive ? 'carry-flowing' : (isCarryPassed ? 'carry-passed' : '')}">
+          <div class="dyn-carry-arrow">◀ C${i}=${state.carries[i]}</div>
+          <div class="dyn-carry-wire"></div>
+        </div>
+      `;
+    }
+  });
+
+  const finalCout = state.carries[4];
+  const isFinished = state.currentFA === -1 || isFinal;
+
+  container.innerHTML = `
+    <div class="dyn-rca-container">
+      <div class="dyn-stage-header">
+        <span class="dyn-stage-tag"><span class="dyn-chip">RCA-4</span> Ripple Carry Adder (4-bit)</span>
+        <span class="dyn-delay-tag">⏱ Gate Delay: <b>${state.latency || '0τ'}</b></span>
+      </div>
+      
+      <div class="dyn-rca-chain">
+        <div class="dyn-final-cout ${isFinished && finalCout ? 'cout-active' : ''}">
+          <div class="dyn-cout-pin-label">Cout (Carry-Out)</div>
+          <div class="dyn-cout-bubble">${isFinished ? finalCout : '?'}</div>
+        </div>
+
+        ${stagesHTML}
+
+        <div class="dyn-initial-cin">
+          <div class="dyn-cin-bubble">Cin=${state.carries[0]}</div>
+          <div class="dyn-cout-pin-label">Initial Carry</div>
+        </div>
+      </div>
+
+      <div class="dyn-rca-telemetry">
+        <span>Active Node: <b>${state.currentFA >= 0 ? 'Full Adder ' + state.currentFA : 'Addition Complete!'}</b></span>
+        <span>Assembled Sum: <b class="result-val">${state.assembledSum || '0000'}</b> (${state.decimalSum || 0})</span>
+      </div>
+    </div>
+  `;
+}
+
+// 3. Booth's Algorithm Shift Register Visualizer
+function renderBoothDatapath(container, state, isFinal) {
+  const aCells = state.aBits.split('').map((b, idx) => `<span class="bit-box bit-box-${b}" title="A[${state.n - 1 - idx}]">${b}</span>`).join('');
+  const qCells = state.qBits.split('').map((b, idx) => {
+    const isQ0 = idx === state.n - 1;
+    return `<span class="bit-box bit-box-${b} ${isQ0 ? 'spotlight-q0' : ''}" title="Q[${state.n - 1 - idx}]">${b}</span>`;
+  }).join('');
+  const qm1Cell = `<span class="bit-box bit-box-${state.qm1} spotlight-qm1" title="Q₋₁">${state.qm1}</span>`;
+
+  container.innerHTML = `
+    <div class="dyn-booth-container">
+      <div class="dyn-stage-header">
+        <span class="dyn-stage-tag"><span class="dyn-chip">Booth Hardware</span> Shift Register Bank</span>
+        <span class="dyn-phase-tag">${state.isComplete ? 'COMPLETE' : 'CYCLE ' + (state.cycle || 1) + ' / ' + state.n}</span>
+      </div>
+
+      <div class="dyn-booth-matrix">
+        <div class="dyn-reg-column dyn-acc-col ${state.actionType === 'add' || state.actionType === 'sub' ? 'col-glow' : ''}">
+          <div class="dyn-col-header">ACCUMULATOR (A) <small>n=${state.n} bits</small></div>
+          <div class="dyn-bit-cells-row">${aCells}</div>
+          <div class="dyn-reg-numeric">Signed: <b>${state.aVal}</b></div>
+        </div>
+
+        <div class="dyn-reg-column dyn-mul-col">
+          <div class="dyn-col-header">MULTIPLIER (Q) <small>n=${state.n} bits</small></div>
+          <div class="dyn-bit-cells-row">${qCells}</div>
+          <div class="dyn-reg-numeric">Signed: <b>${state.qVal}</b></div>
+        </div>
+
+        <div class="dyn-reg-column dyn-qm1-col">
+          <div class="dyn-col-header">Q₋₁ <small>1 bit</small></div>
+          <div class="dyn-bit-cells-row">${qm1Cell}</div>
+          <div class="dyn-reg-numeric"><small>Previous LSB</small></div>
+        </div>
+      </div>
+
+      <div class="dyn-booth-hud">
+        <div class="dyn-hud-pair">
+          <span class="dyn-hud-label">Inspected Pair:</span>
+          <span class="dyn-hud-bits">[ Q₀: <b>${state.q0}</b>, Q₋₁: <b>${state.qm1}</b> ]</span>
+        </div>
+        <div class="dyn-hud-arrow">➔</div>
+        <div class="dyn-hud-action ${state.actionClass || ''}">
+          <b>${state.actionText || 'Inspect bits'}</b>
+        </div>
+      </div>
+
+      ${state.shiftActive ? `
+        <div class="dyn-shift-alert">
+          <span class="dyn-shift-arrows">➔ ➔ ➔</span>
+          <span><b>Arithmetic Right Shift (ASR):</b> Sign bit A[${state.n-1}] replicated, LSB Q₀ → Q₋₁</span>
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+// 4. Division (Restoring & Non-Restoring) Visualizer
+function renderDivisionDatapath(container, state, isRestoring, isFinal) {
+  const n = state.n || 4;
+  const aCells = state.aBits.split('').map((b, idx) => `<span class="bit-box bit-box-${b}" title="A[${n - 1 - idx}]">${b}</span>`).join('');
+  const qCells = state.qBits.split('').map((b, idx) => {
+    const isQ0 = idx === n - 1;
+    return `<span class="bit-box bit-box-${b} ${isQ0 ? 'spotlight-q0' : ''}" title="Q[${n - 1 - idx}]">${b}</span>`;
+  }).join('');
+  const dCells = state.dBits.split('').map((b) => `<span class="bit-box bit-box-${b}">${b}</span>`).join('');
+
+  container.innerHTML = `
+    <div class="dyn-div-container">
+      <div class="dyn-stage-header">
+        <span class="dyn-stage-tag"><span class="dyn-chip">${isRestoring ? 'Restoring' : 'Non-Restoring'}</span> Division Core</span>
+        <span class="dyn-phase-tag">${state.isComplete ? 'DONE' : 'CYCLE ' + (state.cycle || 1) + ' / ' + n}</span>
+      </div>
+
+      <div class="dyn-div-matrix">
+        <div class="dyn-reg-column dyn-acc-col ${state.restorePulse ? 'col-restore' : ''}">
+          <div class="dyn-col-header">REMAINDER (A)</div>
+          <div class="dyn-bit-cells-row">${aCells}</div>
+          <div class="dyn-reg-numeric">Value: <b>${state.aVal}</b></div>
+        </div>
+
+        <div class="dyn-reg-column dyn-mul-col">
+          <div class="dyn-col-header">QUOTIENT (Q)</div>
+          <div class="dyn-bit-cells-row">${qCells}</div>
+          <div class="dyn-reg-numeric">Value: <b>${state.qVal}</b></div>
+        </div>
+
+        <div class="dyn-reg-column dyn-dvs-col">
+          <div class="dyn-col-header">DIVISOR (D)</div>
+          <div class="dyn-bit-cells-row">${dCells}</div>
+          <div class="dyn-reg-numeric">Value: <b>${state.divisor}</b></div>
+        </div>
+      </div>
+
+      <div class="dyn-div-status-bar ${state.statusClass || ''}">
+        <span class="dyn-status-icon">${state.statusIcon || '⚡'}</span>
+        <span class="dyn-status-msg">${state.statusMsg || ''}</span>
+      </div>
+    </div>
+  `;
+}
+
+// 5. Number System Bit Scanner Visualizer
+function renderBitScanner(container, state, isFinal) {
+  const bits = state.bits.split('');
+  const n = bits.length;
+
+  container.innerHTML = `
+    <div class="dyn-scanner-container">
+      <div class="dyn-stage-header">
+        <span class="dyn-stage-tag"><span class="dyn-chip">Interactive Bits</span> ${state.algoName}</span>
+        <span class="dyn-scanner-hint">Click any bit to flip (0 ↔ 1)</span>
+      </div>
+
+      <div class="dyn-interactive-bitstrip">
+        ${bits.map((b, idx) => {
+          const pos = n - 1 - idx;
+          const isScanning = state.scanIdx === idx || (state.scanRange && idx >= state.scanRange[0] && idx <= state.scanRange[1]);
+          return `
+            <div class="dyn-bit-flipper ${b === '1' ? 'bit-is-1' : 'bit-is-0'} ${isScanning ? 'scanner-active' : ''}" 
+                 onclick="toggleInputBit('${state.inputId}', ${idx})" title="Click to flip bit at position 2^${pos}">
+              <div class="dyn-flipper-pos">2<sup>${pos}</sup></div>
+              <div class="dyn-flipper-val">${b}</div>
+              <div class="dyn-flipper-weight">${1 << pos}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <div class="dyn-scanner-telemetry">
+        <span class="dyn-scan-detail">${state.scanDetail || 'Scanning bits...'}</span>
+        <span class="dyn-accum-badge">Accumulator: <b>${state.runningVal !== undefined ? state.runningVal : '—'}</b></span>
+      </div>
+    </div>
+  `;
+}
+
+// 6. Logic Gate Visualizer (Half Adder & Full Adder)
+function renderGateVisual(container, type, a, b, cin, s, cout, s1, c1, c2) {
+  if (type === 'half') {
+    container.innerHTML = `
+      <div class="dyn-gate-stage">
+        <div class="dyn-stage-header">
+          <span class="dyn-stage-tag"><span class="dyn-chip">Logic Circuit</span> Half Adder Signal Propagation</span>
+          <div class="dyn-gate-interactive-bar">
+            <span>Inputs:</span>
+            <button class="dyn-gate-btn ${a ? 'gate-btn-high' : ''}" onclick="toggleHAInput('a')">A = ${a}</button>
+            <button class="dyn-gate-btn ${b ? 'gate-btn-high' : ''}" onclick="toggleHAInput('b')">B = ${b}</button>
+          </div>
+        </div>
+        <div class="gates-row" style="justify-content:center;gap:2rem">
+          <div class="gate-wrap"><div class="gate-label">SUM = A ⊕ B</div>${xorGateSVG(a,b,s)}</div>
+          <div class="gate-wrap"><div class="gate-label">CARRY = A ∧ B</div>${andGateSVG(a,b,cout)}</div>
+        </div>
+      </div>
+    `;
+  } else {
+    container.innerHTML = `
+      <div class="dyn-gate-stage">
+        <div class="dyn-stage-header">
+          <span class="dyn-stage-tag"><span class="dyn-chip">Logic Circuit</span> Full Adder Signal Propagation</span>
+          <div class="dyn-gate-interactive-bar">
+            <span>Inputs:</span>
+            <button class="dyn-gate-btn ${a ? 'gate-btn-high' : ''}" onclick="toggleFAInput('a')">A = ${a}</button>
+            <button class="dyn-gate-btn ${b ? 'gate-btn-high' : ''}" onclick="toggleFAInput('b')">B = ${b}</button>
+            <button class="dyn-gate-btn ${cin ? 'gate-btn-high' : ''}" onclick="toggleFAInput('c')">Cin = ${cin}</button>
+          </div>
+        </div>
+        <div class="gates-row" style="justify-content:center;gap:1.5rem">
+          <div class="gate-wrap"><div class="gate-label">XOR-1 (A⊕B)</div>${xorGateSVG(a,b,s1)}</div>
+          <div class="gate-wrap"><div class="gate-label">XOR-2 (Sum)</div>${xorGateSVG(s1,cin,s)}</div>
+          <div class="gate-wrap"><div class="gate-label">AND-1 (A·B)</div>${andGateSVG(a,b,c1)}</div>
+          <div class="gate-wrap"><div class="gate-label">AND-2 (S1·Cin)</div>${andGateSVG(s1,cin,c2)}</div>
+          <div class="gate-wrap"><div class="gate-label">OR (Cout)</div>${andGateSVG(c1,c2,cout,'OR')}</div>
+        </div>
+      </div>
+    `;
+  }
+}
+
+// 7. Karatsuba Visualizer
+function renderKaratsubaTree(container, state, isFinal) {
+  container.innerHTML = `
+    <div class="dyn-kara-container">
+      <div class="dyn-stage-header">
+        <span class="dyn-stage-tag"><span class="dyn-chip">Divide &amp; Conquer</span> Karatsuba Tree</span>
+        <span class="dyn-phase-tag">${state.phaseName || 'SPLIT'}</span>
+      </div>
+
+      <div class="dyn-kara-split-grid">
+        <div class="dyn-kara-node node-a">
+          <div class="dyn-node-lbl">Number A (${state.A})</div>
+          <div class="dyn-node-split">a = <b>${state.a}</b> (high) | b = <b>${state.b}</b> (low)</div>
+        </div>
+        <div class="dyn-kara-mult-sign">×</div>
+        <div class="dyn-kara-node node-b">
+          <div class="dyn-node-lbl">Number B (${state.B})</div>
+          <div class="dyn-node-split">c = <b>${state.c}</b> (high) | d = <b>${state.d}</b> (low)</div>
+        </div>
+      </div>
+
+      <div class="dyn-kara-triad">
+        <div class="dyn-kara-sub ${state.activeSub === 'z2' ? 'sub-glow' : ''}">
+          <div class="dyn-sub-lbl">z₂ = a × c</div>
+          <div class="dyn-sub-val">${state.z2 !== undefined ? state.z2 : '?'}</div>
+        </div>
+        <div class="dyn-kara-sub ${state.activeSub === 'z1' ? 'sub-glow' : ''}">
+          <div class="dyn-sub-lbl">z₁ = (a+b)(c+d) − z₂ − z₀</div>
+          <div class="dyn-sub-val">${state.z1 !== undefined ? state.z1 : '?'}</div>
+        </div>
+        <div class="dyn-kara-sub ${state.activeSub === 'z0' ? 'sub-glow' : ''}">
+          <div class="dyn-sub-lbl">z₀ = b × d</div>
+          <div class="dyn-sub-val">${state.z0 !== undefined ? state.z0 : '?'}</div>
+        </div>
+      </div>
+
+      <div class="dyn-kara-formula">
+        <b>Formula:</b> Product = z₂ · 10<sup>${2*state.m}</sup> + z₁ · 10<sup>${state.m}</sup> + z₀ = <b class="result-val">${state.result || '?'}</b>
+      </div>
+    </div>
+  `;
+}
+
+
+/* ===================================================
+   REGISTER TABLE & GATE SVGS
+   =================================================== */
+function regTable(AX,BX,CF,SF,ZF,OF){
+  const AH=(AX>>8)&0xFF, AL=AX&0xFF;
+  const BH=(BX>>8)&0xFF, BL=BX&0xFF;
+  const f=(v,flag)=>v===1?`<span class="flag-on">${flag}=1</span>`:`<span class="flag-off">${flag}=0</span>`;
+  return `<table class="reg-table">
+  <thead><tr><th>AX</th><th>AH</th><th>AL</th><th>BX</th><th>BH</th><th>BL</th><th>CF</th><th>SF</th><th>ZF</th><th>OF</th></tr></thead>
+  <tbody><tr>
+    <td class="highlight">${padBin(AX,16)}<br/>(${AX}h = ${AX})</td>
+    <td>${padBin(AH,8)}<br/>(${AH})</td>
+    <td>${padBin(AL,8)}<br/>(${AL})</td>
+    <td class="highlight">${padBin(BX,16)}<br/>(${BX})</td>
+    <td>${padBin(BH,8)}<br/>(${BH})</td>
+    <td>${padBin(BL,8)}<br/>(${BL})</td>
+    <td>${f(CF,'CF')}</td>
+    <td>${f(SF,'SF')}</td>
+    <td>${f(ZF,'ZF')}</td>
+    <td>${f(OF,'OF')}</td>
+  </tr></tbody></table>`;
+}
+
+function xorGateSVG(a,b,out){
+  return `<svg width="100" height="60" viewBox="0 0 100 60">
+    <style>.gl{stroke:#22d3ee;stroke-width:2;fill:none}.gt{fill:#22d3ee;font-size:9px;font-family:monospace}
+    .gon{stroke:#4ade80;stroke-width:2;fill:rgba(74,222,128,.2)}
+    .goff{stroke:#475569;stroke-width:2;fill:rgba(71,85,105,.1)}</style>
+    <path d="M20,10 Q50,0 80,30 Q50,60 20,50 Q35,30 20,10Z" class="${out?'gon':'goff'}"/>
+    <path d="M15,10 Q30,30 15,50" class="gl"/>
+    <line x1="0" y1="20" x2="20" y2="20" class="${a?'wire-on':'wire-off'}"/>
+    <line x1="0" y1="40" x2="20" y2="40" class="${b?'wire-on':'wire-off'}"/>
+    <line x1="80" y1="30" x2="100" y2="30" class="${out?'wire-on':'wire-off'}"/>
+    <text x="2" y="22" class="gt" fill="${a?'#4ade80':'#475569'}">${a}</text>
+    <text x="2" y="42" class="gt" fill="${b?'#4ade80':'#475569'}">${b}</text>
+    <text x="82" y="33" class="gt" fill="${out?'#4ade80':'#475569'}">${out}</text>
+    <text x="38" y="33" class="gt" fill="#22d3ee">XOR</text>
+  </svg>`;
+}
+
+function andGateSVG(a,b,out,label='AND'){
+  return `<svg width="100" height="60" viewBox="0 0 100 60">
+    <style>.gl{stroke:#a855f7;stroke-width:2;fill:none}.gt{fill:#a855f7;font-size:9px;font-family:monospace}
+    .gon{stroke:#4ade80;stroke-width:2;fill:rgba(74,222,128,.2)}
+    .goff{stroke:#475569;stroke-width:2;fill:rgba(71,85,105,.1)}</style>
+    <path d="M20,10 L60,10 Q90,10 90,30 Q90,50 60,50 L20,50 Z" class="${out?'gon':'goff'}"/>
+    <line x1="0" y1="20" x2="20" y2="20" class="${a?'wire-on':'wire-off'}"/>
+    <line x1="0" y1="40" x2="20" y2="40" class="${b?'wire-on':'wire-off'}"/>
+    <line x1="90" y1="30" x2="100" y2="30" class="${out?'wire-on':'wire-off'}"/>
+    <text x="2" y="22" class="gt" fill="${a?'#4ade80':'#475569'}">${a}</text>
+    <text x="2" y="42" class="gt" fill="${b?'#4ade80':'#475569'}">${b}</text>
+    <text x="92" y="33" class="gt" fill="${out?'#4ade80':'#475569'}">${out}</text>
+    <text x="38" y="33" class="gt" fill="#a855f7">${label}</text>
+  </svg>`;
+}
+
+/* ===================================================
+   TAB 1: 8086 MICROPROCESSOR SIMULATIONS
+   =================================================== */
+
+// 1. 8-bit Addition
+function sim8bitAdd(){
+  const A=clamp(parseInt($('a8add_a').value)||0,0,255);
+  const B=clamp(parseInt($('a8add_b').value)||0,0,255);
+  const raw=A+B, res=raw&0xFF, CF=raw>255?1:0;
+  const SF=(res&0x80)?1:0, ZF=res===0?1:0;
+  const OF=((~(A ^ B) & (A ^ res)) & 0x80)?1:0;
+
+  const ab=padBin(A,8), bb=padBin(B,8), rb=padBin(res,8);
+  let carryArr=[]; let c=0;
+  for(let i=7;i>=0;i--){
+    let s=(A>>i&1)+(B>>i&1)+c;
+    carryArr[i]=c=s>>1;
+  }
+
+  const steps = [
+    {
+      html: stepHead('Instruction Fetch: MOV AL, '+A+' | MOV BL, '+B+' | ADD AL, BL') +
+            stepRow('AL (Operand A):', bitsHTML(ab), ' = '+A) +
+            stepRow('BL (Operand B):', bitsHTML(bb), ' = '+B),
+      state: { al: A, bl: B, ax: A, bx: B, aluOp: 'ADD', phase: 'fetch', phaseName: 'FETCH & DECODE', regAActive: true, regBActive: true, statusDesc: 'Operands latched into registers AL and BL' }
+    },
+    {
+      html: sep() + stepHead('Step-by-step bitwise addition & carry ripple:') +
+            stepRow('Carries:','<span class="ok">'+carryArr.map(x=>`<span class="bit-box bit-box-${x}">${x}</span>`).join('')+'</span>') +
+            stepRow('AL (A) =', bitsHTML(ab)) +
+            stepRow('BL (B) =', bitsHTML(bb)),
+      state: { al: A, bl: B, ax: A, bx: B, aluOp: 'ADD', aluExpr: `${A} + ${B}`, phase: 'bus', phaseName: 'DATA BUS TRANSFER', busActive: true, statusDesc: 'Registers AL and BL transferred along internal data bus to ALU inputs' }
+    },
+    {
+      html: stepRow('ALU Sum =', '<span class="result-val">'+bitsHTML(rb)+' = '+res+'</span>') +
+            (CF ? stepRow('Carry Out:', '<span class="warn">CF = 1 (overflow into 9th bit)</span>') : stepRow('Carry Out:', '<span class="ok">CF = 0 (no carry)</span>')),
+      state: { al: A, bl: B, ax: A, bx: B, aluOp: 'ADD', aluExpr: `${A} + ${B} = ${raw}`, aluOut: `${raw} (${rb}b)`, phase: 'alu', phaseName: 'ALU EXECUTION', cf: CF, statusDesc: `ALU computed 8-bit sum ${res}${CF ? ' with Carry generated' : ''}` }
+    },
+    {
+      html: sep() + stepHead('Write-Back to Register AL:') +
+            stepRow('AL ← Sum:', bitsHTML(rb), ' = '+res) +
+            regTable(res, B, CF, SF, ZF, OF),
+      state: { al: res, bl: B, ax: res, bx: B, aluOp: 'ADD', aluOut: res, phase: 'writeback', phaseName: 'WRITE-BACK', cf: CF, sf: SF, zf: ZF, of: OF, alChanged: true, statusDesc: `Sum ${res} (0x${padHex(res,2)}) latched back into destination register AL` }
+    },
+    {
+      html: sep() + stepRow('Final Result:', `<span class="result-val">${A} + ${B} = ${raw}</span>`, CF ? 'Carry generated! 8-bit AL = '+res : 'No carry. AL = '+res),
+      state: { al: res, bl: B, ax: res, bx: B, aluOp: 'ADD', aluOut: res, phase: 'complete', phaseName: 'COMPLETE', cf: CF, sf: SF, zf: ZF, of: OF, statusDesc: `Operation finished. Flags: CF=${CF}, ZF=${ZF}, SF=${SF}, OF=${OF}` }
+    }
+  ];
+
+  DynamicsEngine.register('a8add', {
+    title: '8-bit Addition (ADD AL, BL)',
+    steps,
+    renderVisual: (container, state, stepIdx, total, isFinal) => render8086Datapath(container, state, isFinal)
+  });
+}
+
+// 2. 8-bit Subtraction
+function sim8bitSub(){
+  const A=clamp(parseInt($('a8sub_a').value)||0,0,255);
+  const B=clamp(parseInt($('a8sub_b').value)||0,0,255);
+  const raw=A-B, res=((raw%256)+256)%256;
+  const CF=raw<0?1:0, SF=(res&0x80)?1:0, ZF=res===0?1:0;
+  const OF=(((A ^ B) & (A ^ res)) & 0x80)?1:0;
+
+  const twosB=((~B)&0xFF)+1;
+  const twosB8=(twosB)&0xFF;
+
+  const steps = [
+    {
+      html: stepHead('Instruction Fetch: MOV AL, '+A+' | MOV BL, '+B+' | SUB AL, BL') +
+            stepRow('AL (Operand A):', bitsHTML(padBin(A,8)), ' = '+A) +
+            stepRow('BL (Operand B):', bitsHTML(padBin(B,8)), ' = '+B),
+      state: { al: A, bl: B, ax: A, bx: B, aluOp: 'SUB', phase: 'fetch', phaseName: 'FETCH & LOAD', regAActive: true, regBActive: true, statusDesc: 'Operands A and B loaded into registers AL and BL' }
+    },
+    {
+      html: sep() + stepHead("2's Complement of Subtrahend (BL):") +
+            stepRow('BL =', bitsHTML(padBin(B,8)), ' = '+B) +
+            stepRow("1's Comp(BL) =", bitsHTML(padBin((~B)&0xFF, 8))) +
+            stepRow("2's Comp(BL) =", bitsHTML(padBin(twosB8, 8)), ' = '+twosB8),
+      state: { al: A, bl: B, ax: A, bx: B, aluOp: 'SUB', aluExpr: `neg(BL) = ${twosB8}`, phase: 'bus', phaseName: 'COMPLEMENT GENERATION', busActive: true, statusDesc: "ALU generates 2's complement of subtrahend BL" }
+    },
+    {
+      html: sep() + stepHead("ALU Addition: A + 2's Complement of B") +
+            stepRow('AL =', bitsHTML(padBin(A,8))) +
+            stepRow("+ 2'sComp(B) =", bitsHTML(padBin(twosB8,8))) +
+            stepRow('Result =', '<span class="result-val">'+bitsHTML(padBin(res,8))+'</span>', ' = '+res),
+      state: { al: A, bl: B, ax: A, bx: B, aluOp: 'SUB', aluExpr: `${A} - ${B} = ${raw}`, aluOut: res, phase: 'alu', phaseName: 'ALU EXECUTION', cf: CF, sf: SF, zf: ZF, statusDesc: `ALU computed subtraction: ${raw}${CF ? ' (Borrow generated: CF=1)' : ' (No borrow)'}` }
+    },
+    {
+      html: sep() + stepHead('Write-Back to Register AL:') +
+            stepRow('AL ← Result:', bitsHTML(padBin(res,8)), ' = '+res) +
+            regTable(res, B, CF, SF, ZF, OF),
+      state: { al: res, bl: B, ax: res, bx: B, aluOp: 'SUB', aluOut: res, phase: 'writeback', phaseName: 'WRITE-BACK', cf: CF, sf: SF, zf: ZF, of: OF, alChanged: true, statusDesc: `Result ${res} written to AL. Status flags latched.` }
+    },
+    {
+      html: sep() + stepRow('Final Result:', `<span class="result-val">${A} − ${B} = ${raw}</span>`, CF ? 'Borrow generated! (B > A)' : 'No borrow'),
+      state: { al: res, bl: B, ax: res, bx: B, aluOp: 'SUB', aluOut: res, phase: 'complete', phaseName: 'COMPLETE', cf: CF, sf: SF, zf: ZF, of: OF, statusDesc: 'SUB instruction cycle complete.' }
+    }
+  ];
+
+  DynamicsEngine.register('a8sub', {
+    title: '8-bit Subtraction (SUB AL, BL)',
+    steps,
+    renderVisual: (container, state, stepIdx, total, isFinal) => render8086Datapath(container, state, isFinal)
+  });
+}
+
+// 3. 16-bit Addition
+function sim16bitAdd(){
+  const A=clamp(parseInt($('a16add_a').value)||0,0,65535);
+  const B=clamp(parseInt($('a16add_b').value)||0,0,65535);
+  const raw=A+B, res=raw&0xFFFF, CF=raw>65535?1:0;
+  const SF=(res&0x8000)?1:0, ZF=res===0?1:0;
+  const OF=((~(A ^ B) & (A ^ res)) & 0x8000)?1:0;
+
+  const steps = [
+    {
+      html: stepHead('Instruction: MOV AX, '+A+' | MOV BX, '+B+' | ADD AX, BX') +
+            stepRow('AX (16-bit):', bitsHTML(padBin(A,16)), ' = '+A) +
+            stepRow('BX (16-bit):', bitsHTML(padBin(B,16)), ' = '+B),
+      state: { is16: true, ax: A, bx: B, aluOp: 'ADD16', phase: 'fetch', phaseName: '16-BIT LOAD', regAActive: true, regBActive: true, statusDesc: '16-bit registers AX and BX initialized' }
+    },
+    {
+      html: sep() + stepHead('Data Bus Transfer to 16-bit ALU:') +
+            stepRow('Low Byte:', `AL=${A&0xFF}, BL=${B&0xFF}`) +
+            stepRow('High Byte:', `AH=${(A>>8)&0xFF}, BH=${(B>>8)&0xFF}`),
+      state: { is16: true, ax: A, bx: B, aluOp: 'ADD16', aluExpr: `${A} + ${B}`, phase: 'bus', phaseName: '16-BIT BUS TRANSFER', busActive: true, statusDesc: 'Routing 16-bit operands over system data bus' }
+    },
+    {
+      html: sep() + stepHead('ALU 16-bit Addition:') +
+            stepRow('AX =', bitsHTML(padBin(A,16))) +
+            stepRow('BX =', bitsHTML(padBin(B,16))) +
+            stepRow('Sum =', '<span class="result-val">'+bitsHTML(padBin(res,16))+'</span>') +
+            (CF ? stepRow('','<span class="warn">Carry Out! CF=1 (17th bit overflow)</span>') : ''),
+      state: { is16: true, ax: A, bx: B, aluOp: 'ADD16', aluExpr: `${A} + ${B} = ${raw}`, aluOut: res, phase: 'alu', phaseName: '16-BIT ALU ADD', cf: CF, sf: SF, zf: ZF, statusDesc: `ALU finished 16-bit summation: ${raw}` }
+    },
+    {
+      html: sep() + stepHead('Write-Back to Register AX:') +
+            regTable(res, B, CF, SF, ZF, OF),
+      state: { is16: true, ax: res, bx: B, aluOp: 'ADD16', aluOut: res, phase: 'writeback', phaseName: 'WRITE-BACK', cf: CF, sf: SF, zf: ZF, of: OF, alChanged: true, statusDesc: `AX updated with sum ${res} (0x${padHex(res,4)})` }
+    },
+    {
+      html: sep() + stepRow('Final Result:', `<span class="result-val">${A} + ${B} = ${raw}</span>`, CF ? 'Carry CF=1' : 'No carry'),
+      state: { is16: true, ax: res, bx: B, aluOp: 'ADD16', aluOut: res, phase: 'complete', phaseName: 'COMPLETE', cf: CF, sf: SF, zf: ZF, of: OF, statusDesc: '16-bit ADD AX, BX complete.' }
+    }
+  ];
+
+  DynamicsEngine.register('a16add', {
+    title: '16-bit Addition (ADD AX, BX)',
+    steps,
+    renderVisual: (container, state, stepIdx, total, isFinal) => render8086Datapath(container, state, isFinal)
+  });
+}
+
+// 4. 8-bit Multiplication
+function sim8bitMul(){
+  const AL=clamp(parseInt($('a8mul_a').value)||0,0,255);
+  const BL=clamp(parseInt($('a8mul_b').value)||0,0,255);
+  const AX=AL*BL;
+  const AH_res=(AX>>8)&0xFF, AL_res=AX&0xFF;
+  const CF_OF=AH_res>0?1:0;
+
+  let ppRows='';
+  for(let i=7;i>=0;i--){
+    if((BL>>i)&1){
+      const pp=(AL<<i)&0xFFFF;
+      ppRows+=stepRow(`BL[${i}]=1 →`,bitsHTML(padBin(pp,16)),' shift AL left '+i);
+    }
+  }
+
+  const steps = [
+    {
+      html: stepHead('Instruction: MOV AL, '+AL+' | MOV BL, '+BL+' | MUL BL') +
+            stepRow('AL (Multiplicand):', bitsHTML(padBin(AL,8)), ' = '+AL) +
+            stepRow('BL (Multiplier):', bitsHTML(padBin(BL,8)), ' = '+BL),
+      state: { al: AL, bl: BL, ax: AL, bx: BL, aluOp: 'MUL', phase: 'fetch', phaseName: 'OPERAND LOAD', regAActive: true, regBActive: true, statusDesc: 'AL and BL loaded into processor registers' }
+    },
+    {
+      html: sep() + stepHead('Partial Product Accumulation (Bit-by-Bit):') + ppRows,
+      state: { al: AL, bl: BL, ax: AL, bx: BL, aluOp: 'MUL', aluExpr: `${AL} × ${BL}`, phase: 'bus', phaseName: 'PARTIAL PRODUCTS', busActive: true, statusDesc: 'Hardware multiplier generating bitwise partial products' }
+    },
+    {
+      html: sep() + stepHead('ALU Core 16-bit Product Assembly:') +
+            stepRow('AX (Product):', '<span class="result-val">'+bitsHTML(padBin(AX,16))+'</span>', ' = '+AX) +
+            stepRow('AH (High Byte):', bitsHTML(padBin(AH_res,8)), ' = '+AH_res) +
+            stepRow('AL (Low Byte):', bitsHTML(padBin(AL_res,8)), ' = '+AL_res),
+      state: { al: AL_res, ah: AH_res, bl: BL, ax: AX, bx: BL, aluOp: 'MUL', aluExpr: `${AL} × ${BL} = ${AX}`, aluOut: AX, phase: 'alu', phaseName: 'PRODUCT FORMATION', cf: CF_OF, of: CF_OF, statusDesc: `16-bit product generated: AX = ${AX} (AH=${AH_res}, AL=${AL_res})` }
+    },
+    {
+      html: sep() + stepHead('Final Register State:') +
+            regTable(AX, BL, CF_OF, 0, AX===0?1:0, CF_OF),
+      state: { al: AL_res, ah: AH_res, bl: BL, ax: AX, bx: BL, aluOp: 'MUL', aluOut: AX, phase: 'writeback', phaseName: 'WRITE-BACK', cf: CF_OF, of: CF_OF, zf: AX===0?1:0, alChanged: true, statusDesc: `Product latched into AX. Flags CF=OF=${CF_OF} (${CF_OF ? 'High byte AH non-zero' : 'Upper byte AH is zero'})` }
+    },
+    {
+      html: sep() + stepRow('Final Result:', `<span class="result-val">${AL} × ${BL} = ${AX}</span>`, 'AH='+AH_res+', AL='+AL_res),
+      state: { al: AL_res, ah: AH_res, bl: BL, ax: AX, bx: BL, aluOp: 'MUL', aluOut: AX, phase: 'complete', phaseName: 'COMPLETE', cf: CF_OF, of: CF_OF, zf: AX===0?1:0, statusDesc: 'MUL BL instruction execution finished.' }
+    }
+  ];
+
+  DynamicsEngine.register('a8mul', {
+    title: '8-bit Multiplication (MUL BL)',
+    steps,
+    renderVisual: (container, state, stepIdx, total, isFinal) => render8086Datapath(container, state, isFinal)
+  });
+}
+
+// 5. 8-bit Division
+function sim8bitDiv(){
+  const AX=clamp(parseInt($('a8div_a').value)||0,0,65535);
+  const BL=clamp(parseInt($('a8div_b').value)||1,1,255);
+  if(BL===0){
+    $('a8div_out').innerHTML='<span class="warn">Division by zero!</span>';
+    return;
+  }
+  const quot=Math.floor(AX/BL), rem=AX%BL;
+  if(quot>255){
+    $('a8div_out').innerHTML=`<span class="warn">Divide overflow! Quotient ${quot} exceeds 8-bit range (0–255). Interrupt 0 would fire.</span>`;
+    return;
+  }
+  const AX_final=(rem<<8)|quot;
+
+  const steps = [
+    {
+      html: stepHead('Instruction: MOV AX, '+AX+' | MOV BL, '+BL+' | DIV BL') +
+            stepRow('AX (Dividend):', bitsHTML(padBin(AX,16)), ' = '+AX) +
+            stepRow('BL (Divisor):', bitsHTML(padBin(BL,8)), ' = '+BL),
+      state: { ax: AX, bl: BL, bx: BL, aluOp: 'DIV', phase: 'fetch', phaseName: 'DIVIDEND & DIVISOR LOAD', regAActive: true, regBActive: true, statusDesc: `AX (16-bit dividend) = ${AX}, BL (8-bit divisor) = ${BL}` }
+    },
+    {
+      html: sep() + stepHead('ALU Integer Division Execution:') +
+            stepRow('AX ÷ BL:', `<span class="highlight">${AX} ÷ ${BL}</span>`) +
+            stepRow('Quotient (AX ÷ BL) =', '<span class="result-val">'+bitsHTML(padBin(quot,8))+'</span>', ' = '+quot) +
+            stepRow('Remainder (AX % BL) =', '<span class="result-val">'+bitsHTML(padBin(rem,8))+'</span>', ' = '+rem),
+      state: { ax: AX, bl: BL, bx: BL, aluOp: 'DIV', aluExpr: `${AX} ÷ ${BL}`, aluOut: `Q=${quot}, R=${rem}`, phase: 'alu', phaseName: 'ALU DIVISION', statusDesc: `ALU evaluated: Quotient = ${quot}, Remainder = ${rem}` }
+    },
+    {
+      html: sep() + stepHead('Register Write-Back:') +
+            stepRow('AL ← Quotient:', bitsHTML(padBin(quot,8)), ' = '+quot) +
+            stepRow('AH ← Remainder:', bitsHTML(padBin(rem,8)), ' = '+rem) +
+            regTable(AX_final, BL, 0, (quot&0x80)?1:0, quot===0?1:0, 0),
+      state: { al: quot, ah: rem, bl: BL, ax: AX_final, bx: BL, aluOp: 'DIV', aluOut: `Q=${quot}, R=${rem}`, phase: 'writeback', phaseName: 'WRITE-BACK', alChanged: true, statusDesc: 'Quotient stored in AL; Remainder stored in AH.' }
+    },
+    {
+      html: sep() + stepRow('Final Result:', `<span class="result-val">Quotient AL=${quot}, Remainder AH=${rem}</span>`),
+      state: { al: quot, ah: rem, bl: BL, ax: AX_final, bx: BL, aluOp: 'DIV', aluOut: `Q=${quot}, R=${rem}`, phase: 'complete', phaseName: 'COMPLETE', statusDesc: 'DIV BL complete. No flags modified.' }
+    }
+  ];
+
+  DynamicsEngine.register('a8div', {
+    title: '8-bit Division (DIV BL)',
+    steps,
+    renderVisual: (container, state, stepIdx, total, isFinal) => render8086Datapath(container, state, isFinal)
+  });
+}
+
+/* ===================================================
+   TAB 2: NUMBER SYSTEMS SIMULATIONS
+   =================================================== */
+
+function validateBinary(s){return /^[01]+$/.test(s);}
+
+// 6. Binary → Decimal
+function simBinDec(){
+  const s=$('bd_in').value.trim();
+  if(!validateBinary(s)){$('bd_out').innerHTML='<span class="warn">Enter valid binary (0s and 1s only)</span>';return;}
+  const n=s.length;
+  let total=0;
+  const steps = [];
+
+  steps.push({
+    html: stepHead('Binary → Decimal: Positional Weight Method') + stepRow('Input Binary:', bitsHTML(s)),
+    state: { bits: s, algoName: 'Binary → Decimal', inputId: 'bd_in', scanIdx: -1, scanDetail: 'Input string loaded. Preparing to scan positional bits...', runningVal: 0 }
+  });
+
+  for(let i=0;i<n;i++){
+    const bit=parseInt(s[i]);
+    const pos=n-1-i;
+    const val=bit*(1<<pos);
+    total+=val;
+    steps.push({
+      html: stepRow(`Bit[${pos}] = ${bit}:`, `<span class="${bit?'ok':'flag-off'}">${bit} × 2<sup>${pos}</sup> = <b>${val}</b></span>`, `Accumulated total: ${total}`),
+      state: { bits: s, algoName: 'Binary → Decimal', inputId: 'bd_in', scanIdx: i, scanDetail: `Evaluating bit[${pos}] = ${bit}: adds ${bit} × 2^${pos} = ${val}`, runningVal: total }
+    });
+  }
+
+  steps.push({
+    html: sep() + stepRow('Final Decimal Value:', `<span class="result-val">${total}</span>`),
+    state: { bits: s, algoName: 'Binary → Decimal', inputId: 'bd_in', scanIdx: -1, scanDetail: `Evaluation complete! Decimal equivalent: ${total}`, runningVal: total }
+  });
+
+  DynamicsEngine.register('bd', {
+    title: 'Binary → Decimal',
+    steps,
+    renderVisual: (container, state, stepIdx, totalSteps, isFinal) => renderBitScanner(container, state, isFinal)
+  });
+}
+
+// 7. Binary → Octal
+function simBinOct(){
+  const raw=$('bo_in').value.trim();
+  if(!validateBinary(raw)){$('bo_out').innerHTML='<span class="warn">Enter valid binary</span>';return;}
+  let s=raw;
+  while(s.length%3!==0) s='0'+s;
+  const steps=[];
+
+  steps.push({
+    html: stepHead('Binary → Octal: Group bits into 3s from the right') +
+          stepRow('Raw Input:', bitsHTML(raw)) +
+          (raw.length!==s.length ? stepRow('Padded:', bitsHTML(s), ' (padded to multiple of 3)') : ''),
+    state: { bits: s, algoName: 'Binary → Octal', inputId: 'bo_in', scanRange: null, scanDetail: 'Preparing 3-bit group partitions...' }
+  });
+
+  let groups=[];
+  for(let i=0;i<s.length;i+=3){
+    const g=s.slice(i,i+3), val=parseInt(g,2);
+    groups.push(val);
+    steps.push({
+      html: stepRow(`Group ${i/3+1} [${g}]:`, `<span class="ok">${g}</span> → <span class="highlight">${val}</span>`),
+      state: { bits: s, algoName: 'Binary → Octal', inputId: 'bo_in', scanRange: [i, i+2], scanDetail: `Group ${i/3+1}: "${g}" in octal = ${val}`, runningVal: groups.join('') }
+    });
+  }
+
+  steps.push({
+    html: sep() + stepRow('Final Octal String:', `<span class="result-val">${groups.join('')}</span>`),
+    state: { bits: s, algoName: 'Binary → Octal', inputId: 'bo_in', scanRange: null, scanDetail: `Octal representation: ${groups.join('')}`, runningVal: groups.join('') }
+  });
+
+  DynamicsEngine.register('bo', {
+    title: 'Binary → Octal',
+    steps,
+    renderVisual: (container, state, stepIdx, totalSteps, isFinal) => renderBitScanner(container, state, isFinal)
+  });
+}
+
+// 8. Binary → Hex
+function simBinHex(){
+  const raw=$('bh_in').value.trim();
+  if(!validateBinary(raw)){$('bh_out').innerHTML='<span class="warn">Enter valid binary</span>';return;}
+  let s=raw;
+  while(s.length%4!==0) s='0'+s;
+  const hexChars='0123456789ABCDEF';
+  const steps=[];
+
+  steps.push({
+    html: stepHead('Binary → Hexadecimal: Group bits into 4s from the right') +
+          stepRow('Raw Input:', bitsHTML(raw)) +
+          (raw.length!==s.length ? stepRow('Padded:', bitsHTML(s), ' (padded to multiple of 4)') : ''),
+    state: { bits: s, algoName: 'Binary → Hexadecimal', inputId: 'bh_in', scanRange: null, scanDetail: 'Preparing 4-bit nibble partitions...' }
+  });
+
+  let hexResult='';
+  for(let i=0;i<s.length;i+=4){
+    const g=s.slice(i,i+4), val=parseInt(g,2), h=hexChars[val];
+    hexResult+=h;
+    steps.push({
+      html: stepRow(`Nibble ${i/4+1} [${g}]:`, `<span class="ok">${g}</span> → <span class="highlight">${val}</span> → <b>${h}</b>`),
+      state: { bits: s, algoName: 'Binary → Hexadecimal', inputId: 'bh_in', scanRange: [i, i+3], scanDetail: `Nibble ${i/4+1}: "${g}" = ${val} = 0x${h}`, runningVal: '0x' + hexResult }
+    });
+  }
+
+  steps.push({
+    html: sep() + stepRow('Final Hexadecimal String:', `<span class="result-val">0x${hexResult}</span>`),
+    state: { bits: s, algoName: 'Binary → Hexadecimal', inputId: 'bh_in', scanRange: null, scanDetail: `Hex representation: 0x${hexResult}`, runningVal: '0x' + hexResult }
+  });
+
+  DynamicsEngine.register('bh', {
+    title: 'Binary → Hexadecimal',
+    steps,
+    renderVisual: (container, state, stepIdx, totalSteps, isFinal) => renderBitScanner(container, state, isFinal)
+  });
+}
+
+// 9. Binary → Gray
+function simBinGray(){
+  const s=$('bg_in').value.trim();
+  if(!validateBinary(s)){$('bg_out').innerHTML='<span class="warn">Enter valid binary</span>';return;}
+  const steps=[];
+
+  steps.push({
+    html: stepHead('Binary → Gray Code: G[0]=B[0], then G[i] = B[i-1] ⊕ B[i]') + stepRow('Input Binary:', bitsHTML(s)),
+    state: { bits: s, algoName: 'Binary → Gray Code', inputId: 'bg_in', scanIdx: -1, scanDetail: 'Loaded binary string for Gray encoding...' }
+  });
+
+  let gray='';
+  for(let i=0;i<s.length;i++){
+    if(i===0){
+      gray+=s[0];
+      steps.push({
+        html: stepRow('G[0]:', `<span class="ok">MSB unchanged = ${s[0]}</span>`),
+        state: { bits: s, algoName: 'Binary → Gray Code', inputId: 'bg_in', scanIdx: 0, scanDetail: `G[0] copied directly from B[0] = ${s[0]}`, runningVal: gray }
+      });
+    } else {
+      const g=(parseInt(s[i-1])^parseInt(s[i])).toString();
+      gray+=g;
+      steps.push({
+        html: stepRow(`G[${i}]:`, `B[${i-1}] ⊕ B[${i}] = ${s[i-1]} ⊕ ${s[i]} = <span class="highlight">${g}</span>`),
+        state: { bits: s, algoName: 'Binary → Gray Code', inputId: 'bg_in', scanIdx: i, scanDetail: `G[${i}] = B[${i-1}] ⊕ B[${i}] (${s[i-1]} ⊕ ${s[i]}) = ${g}`, runningVal: gray }
+      });
+    }
+  }
+
+  steps.push({
+    html: sep() + stepRow('Final Gray Code:', `<span class="result-val">${bitsHTML(gray)}</span>`, '= '+gray),
+    state: { bits: s, algoName: 'Binary → Gray Code', inputId: 'bg_in', scanIdx: -1, scanDetail: `Gray Code Complete: ${gray}`, runningVal: gray }
+  });
+
+  DynamicsEngine.register('bg', {
+    title: 'Binary → Gray Code',
+    steps,
+    renderVisual: (container, state, stepIdx, totalSteps, isFinal) => renderBitScanner(container, state, isFinal)
+  });
+}
+
+// 10. Gray → Binary
+function simGrayBin(){
+  const s=$('gb_in').value.trim();
+  if(!validateBinary(s)){$('gb_out').innerHTML='<span class="warn">Enter valid binary</span>';return;}
+  const steps=[];
+
+  steps.push({
+    html: stepHead('Gray Code → Binary: B[0]=G[0], then B[i] = B[i-1] ⊕ G[i]') + stepRow('Input Gray:', bitsHTML(s)),
+    state: { bits: s, algoName: 'Gray Code → Binary', inputId: 'gb_in', scanIdx: -1, scanDetail: 'Loaded Gray code for Binary decoding...' }
+  });
+
+  let bin='';
+  for(let i=0;i<s.length;i++){
+    if(i===0){
+      bin+=s[0];
+      steps.push({
+        html: stepRow('B[0]:', `MSB same as G[0] = <span class="highlight">${s[0]}</span>`),
+        state: { bits: s, algoName: 'Gray Code → Binary', inputId: 'gb_in', scanIdx: 0, scanDetail: `B[0] copied directly from G[0] = ${s[0]}`, runningVal: bin }
+      });
+    } else {
+      const b=(parseInt(bin[i-1])^parseInt(s[i])).toString();
+      bin+=b;
+      steps.push({
+        html: stepRow(`B[${i}]:`, `B[${i-1}] ⊕ G[${i}] = ${bin[i-1]} ⊕ ${s[i]} = <span class="highlight">${b}</span>`),
+        state: { bits: s, algoName: 'Gray Code → Binary', inputId: 'gb_in', scanIdx: i, scanDetail: `B[${i}] = B[${i-1}] ⊕ G[${i}] (${bin[i-1]} ⊕ ${s[i]}) = ${b}`, runningVal: bin }
+      });
+    }
+  }
+
+  steps.push({
+    html: sep() + stepRow('Final Binary:', `<span class="result-val">${bitsHTML(bin)}</span>`, '= '+parseInt(bin,2)),
+    state: { bits: s, algoName: 'Gray Code → Binary', inputId: 'gb_in', scanIdx: -1, scanDetail: `Binary output: ${bin} (Decimal ${parseInt(bin,2)})`, runningVal: bin }
+  });
+
+  DynamicsEngine.register('gb', {
+    title: 'Gray Code → Binary',
+    steps,
+    renderVisual: (container, state, stepIdx, totalSteps, isFinal) => renderBitScanner(container, state, isFinal)
+  });
+}
+
+// 11. 1's Complement
+function simOnesComp(){
+  const s=$('ones_in').value.trim();
+  if(!validateBinary(s)){$('ones_out').innerHTML='<span class="warn">Enter valid binary</span>';return;}
+  const steps=[];
+
+  steps.push({
+    html: stepHead("1's Complement: Invert every bit (0 → 1, 1 → 0)") + stepRow('Original Binary:', bitsHTML(s)),
+    state: { bits: s, algoName: "1's Complement", inputId: 'ones_in', scanIdx: -1, scanDetail: 'Ready to invert bits...' }
+  });
+
+  let result='';
+  for(let i=0;i<s.length;i++){
+    const flipped=s[i]==='0'?'1':'0';
+    result+=flipped;
+    steps.push({
+      html: stepRow(`Bit[${i}] = ${s[i]}:`, `<span class="${flipped==='1'?'ok':'flag-off'}">flipped → ${flipped}</span>`),
+      state: { bits: s, algoName: "1's Complement", inputId: 'ones_in', scanIdx: i, scanDetail: `Bit[${i}] inverted: ${s[i]} → ${flipped}`, runningVal: result }
+    });
+  }
+
+  steps.push({
+    html: sep() + stepRow("1's Complement Result:", `<span class="result-val">${bitsHTML(result)}</span>`) +
+          stepRow('Decimal Equivalent:', `<span class="highlight">${parseInt(result,2)}</span>`),
+    state: { bits: s, algoName: "1's Complement", inputId: 'ones_in', scanIdx: -1, scanDetail: `1's complement result: ${result}`, runningVal: result }
+  });
+
+  DynamicsEngine.register('ones', {
+    title: "1's Complement",
+    steps,
+    renderVisual: (container, state, stepIdx, totalSteps, isFinal) => renderBitScanner(container, state, isFinal)
+  });
+}
+
+// 12. 2's Complement
+function simTwosComp(){
+  const s=$('twos_in').value.trim();
+  if(!validateBinary(s)){$('twos_out').innerHTML='<span class="warn">Enter valid binary</span>';return;}
+  const steps=[];
+
+  let ones='';
+  for(const b of s) ones+=(b==='0'?'1':'0');
+
+  steps.push({
+    html: stepHead("2's Complement: Invert bits (1's Comp), then add 1") +
+          stepRow('Original:', bitsHTML(s), ' = '+parseInt(s,2)) +
+          stepRow("Step 1 (1's Comp):", bitsHTML(ones)),
+    state: { bits: s, algoName: "2's Complement", inputId: 'twos_in', scanIdx: -1, scanDetail: 'Step 1: All bits inverted to 1\'s complement.' }
+  });
+
+  // Add 1 with carry ripple
+  let arr=ones.split('').map(Number), carry=1;
+  const carries=[];
+  for(let i=arr.length-1;i>=0;i--){
+    const s2=arr[i]+carry;
+    arr[i]=s2%2;
+    carry=Math.floor(s2/2);
+    carries[i]=carry;
+    steps.push({
+      html: stepRow(`Bit[${i}]: ${ones[i]} + carry(${carry?1:0})`, `Sum=${arr[i]}, CarryOut=${carry}`),
+      state: { bits: s, algoName: "2's Complement", inputId: 'twos_in', scanIdx: i, scanDetail: `Ripple add 1 at bit[${i}]: sum bit = ${arr[i]}, carry = ${carry}`, runningVal: arr.join('') }
+    });
+  }
+
+  const result=arr.join('');
+  steps.push({
+    html: sep() + stepRow("Final 2's Complement:", `<span class="result-val">${bitsHTML(result)}</span>`, ' = -'+parseInt(s,2)) +
+          (carry ? stepRow('','<span class="warn">Final carry discarded (overflow)</span>') : ''),
+    state: { bits: s, algoName: "2's Complement", inputId: 'twos_in', scanIdx: -1, scanDetail: `2's Complement complete: ${result} (represents -${parseInt(s,2)})`, runningVal: result }
+  });
+
+  DynamicsEngine.register('twos', {
+    title: "2's Complement",
+    steps,
+    renderVisual: (container, state, stepIdx, totalSteps, isFinal) => renderBitScanner(container, state, isFinal)
+  });
+}
+
+/* ===================================================
+   TAB 3: ARITHMETIC CIRCUITS & ALGORITHMS
+   =================================================== */
+
+// 13. Half Adder
+function simHalfAdder(){
+  const A=parseInt($('ha_a').value), B=parseInt($('ha_b').value);
+  const S=A^B, C=A&B;
+
+  let ttHTML=`<table class="tt"><thead><tr><th>A</th><th>B</th><th>Sum (S)</th><th>Carry (C)</th></tr></thead><tbody>`;
+  for(const a of[0,1]) for(const b of[0,1]){
+    const s=a^b,c=a&b;
+    const hl=(a===A&&b===B)?'style="background:rgba(251,191,36,.18);color:var(--yellow);font-weight:700"':'';
+    ttHTML+=`<tr ${hl}><td>${a}</td><td>${b}</td><td>${s}</td><td>${c}</td></tr>`;
+  }
+  ttHTML+=`</tbody></table>`;
+
+  const steps=[
+    {
+      html: stepHead('Half Adder: Sum = A ⊕ B, Carry = A ∧ B') +
+            stepRow('Input A:', `<b>${A}</b>`) + stepRow('Input B:', `<b>${B}</b>`),
+      state: { a: A, b: B, s: S, c: C, phase: 'inputs' }
+    },
+    {
+      html: stepRow('XOR Gate (Sum):', `${A} ⊕ ${B} = <span class="result-val">${S}</span>`),
+      state: { a: A, b: B, s: S, c: C, phase: 'sum' }
+    },
+    {
+      html: stepRow('AND Gate (Carry):', `${A} ∧ ${B} = <span class="result-val">${C}</span>`),
+      state: { a: A, b: B, s: S, c: C, phase: 'carry' }
+    },
+    {
+      html: sep() + stepHead('Truth Table:') + ttHTML +
+            stepRow('Circuit Outputs:', `<span class="result-val">Sum=${S}, Carry=${C}</span>`),
+      state: { a: A, b: B, s: S, c: C, phase: 'complete' }
+    }
+  ];
+
+  DynamicsEngine.register('ha', {
+    title: 'Half Adder',
+    steps,
+    renderVisual: (container, state) => renderGateVisual(container, 'half', state.a, state.b, 0, state.s, state.c)
+  });
+}
+
+// 14. Full Adder
+function simFullAdder(){
+  const A=parseInt($('fa_a').value), B=parseInt($('fa_b').value), Cin=parseInt($('fa_c').value);
+  const S1=A^B, C1=A&B, S=S1^Cin, C2=S1&Cin, Cout=C1|C2;
+
+  let ttHTML=`<table class="tt"><thead><tr><th>A</th><th>B</th><th>Cin</th><th>Sum</th><th>Cout</th></tr></thead><tbody>`;
+  for(const a of[0,1]) for(const b of[0,1]) for(const c of[0,1]){
+    const s=(a^b^c), co=((a&b)|(c&(a^b)));
+    const hl=(a===A&&b===B&&c===Cin)?'style="background:rgba(251,191,36,.18);color:var(--yellow);font-weight:700"':'';
+    ttHTML+=`<tr ${hl}><td>${a}</td><td>${b}</td><td>${c}</td><td>${s}</td><td>${co}</td></tr>`;
+  }
+  ttHTML+=`</tbody></table>`;
+
+  const steps=[
+    {
+      html: stepHead('Full Adder Circuit Inputs:') +
+            stepRow('Inputs:', `A=${A}, B=${B}, Cin=${Cin}`),
+      state: { a: A, b: B, cin: Cin, s: S, cout: Cout, s1: S1, c1: C1, c2: C2, phase: 'inputs' }
+    },
+    {
+      html: stepRow('Stage 1 (HA 1):', `S1 = A⊕B = ${S1}, C1 = A·B = ${C1}`),
+      state: { a: A, b: B, cin: Cin, s: S, cout: Cout, s1: S1, c1: C1, c2: C2, phase: 'stage1' }
+    },
+    {
+      html: stepRow('Stage 2 (HA 2):', `Sum = S1⊕Cin = ${S}, C2 = S1·Cin = ${C2}`),
+      state: { a: A, b: B, cin: Cin, s: S, cout: Cout, s1: S1, c1: C1, c2: C2, phase: 'stage2' }
+    },
+    {
+      html: stepRow('Stage 3 (OR Gate):', `Cout = C1 | C2 = ${C1} | ${C2} = <span class="result-val">${Cout}</span>`),
+      state: { a: A, b: B, cin: Cin, s: S, cout: Cout, s1: S1, c1: C1, c2: C2, phase: 'stage3' }
+    },
+    {
+      html: sep() + stepHead('Truth Table:') + ttHTML +
+            stepRow('Final Outputs:', `<span class="result-val">Sum=${S}, Cout=${Cout}</span>`),
+      state: { a: A, b: B, cin: Cin, s: S, cout: Cout, s1: S1, c1: C1, c2: C2, phase: 'complete' }
+    }
+  ];
+
+  DynamicsEngine.register('fa', {
+    title: 'Full Adder',
+    steps,
+    renderVisual: (container, state) => renderGateVisual(container, 'full', state.a, state.b, state.cin, state.s, state.cout, state.s1, state.c1, state.c2)
+  });
+}
+
+// 15. Ripple Carry Adder (4-bit)
+function simRCA(){
+  const A=clamp(parseInt($('rca_a').value)||0,0,15);
+  const B=clamp(parseInt($('rca_b').value)||0,0,15);
+  const Cin=parseInt($('rca_c').value);
+  const ab=padBin(A,4), bb=padBin(B,4);
+
+  const aBits=[(A>>0)&1, (A>>1)&1, (A>>2)&1, (A>>3)&1];
+  const bBits=[(B>>0)&1, (B>>1)&1, (B>>2)&1, (B>>3)&1];
+  const carries=[Cin];
+  const sumBits=[];
+
+  for(let i=0;i<4;i++){
+    const s=aBits[i]^bBits[i]^carries[i];
+    const cout=(aBits[i]&bBits[i])|(carries[i]&(aBits[i]^bBits[i]));
+    sumBits[i]=s;
+    carries[i+1]=cout;
+  }
+
+  const steps=[];
+  steps.push({
+    html: stepHead('4-bit Ripple Carry Adder: Chains 4 Full Adders') +
+          stepRow('A =', bitsHTML(ab), ' = '+A) +
+          stepRow('B =', bitsHTML(bb), ' = '+B) +
+          stepRow('Cin =', `<span class="bit-box bit-box-${Cin}">${Cin}</span>`),
+    state: { currentFA: 0, carries, aBits, bBits, sumBits, latency: '0τ', assembledSum: '????', decimalSum: '—' }
+  });
+
+  for(let i=0;i<4;i++){
+    const currentSumStr=sumBits.slice(0,i+1).reverse().join('');
+    steps.push({
+      html: stepRow(`FA ${i} (Bit ${i}):`, `A[${i}]=${aBits[i]}, B[${i}]=${bBits[i]}, Cin=${carries[i]} → Sum[${i}]=${sumBits[i]}, Cout=${carries[i+1]}`, `Delay: ${(i+1)*2}τ`),
+      state: { currentFA: i, carries, aBits, bBits, sumBits, latency: `${(i+1)*2}τ`, assembledSum: currentSumStr.padStart(4, '?'), decimalSum: 'Computing...' }
+    });
+  }
+
+  const fullSum=sumBits.slice().reverse().join('');
+  const finalDecimal=A+B+Cin;
+  steps.push({
+    html: sep() + stepRow('Final 4-bit Sum:', bitsHTML(fullSum)) +
+          stepRow('Final Carry-Out (C4):', `<span class="${carries[4]?'warn':'ok'}">${carries[4]}</span>`, carries[4] ? 'Overflow into 5th bit' : 'No overflow') +
+          stepRow('Total Latency:', `<span class="ok">8τ Gate Delays</span>`) +
+          stepRow('Verification:', `<span class="result-val">${A} + ${B} + ${Cin} = ${finalDecimal}</span>`),
+    state: { currentFA: -1, carries, aBits, bBits, sumBits, latency: '8τ (Max)', assembledSum: fullSum, decimalSum: finalDecimal, finalCout: carries[4] }
+  });
+
+  DynamicsEngine.register('rca', {
+    title: '4-bit Ripple Carry Adder',
+    steps,
+    renderVisual: (container, state, stepIdx, total, isFinal) => renderRCADatapath(container, state, isFinal)
+  });
+}
+
+// 16. Booth's Algorithm
+function simBooth(){
+  const n=parseInt($('booth_bits').value)||4;
+  const M=clamp(parseInt($('booth_m').value)||0,-(1<<(n-1)),(1<<(n-1))-1);
+  const Q=clamp(parseInt($('booth_q').value)||0,-(1<<(n-1)),(1<<(n-1))-1);
+
+  const Mbin=signedToBin(M,n);
+  const Mneg=signedToBin(-M,n);
+  const mask=(1<<n)-1;
+
+  const toNBits=(v)=>((v%(1<<n))+(1<<n))%(1<<n);
+  const signed=(v)=>{v=toNBits(v);return v>=(1<<(n-1))?v-(1<<n):v;}
+
+  let aVal=0;
+  let qVal=Q;
+  let qm1=0;
+
+  const steps=[];
+  steps.push({
+    html: stepHead(`Booth's Algorithm: ${M} × ${Q} (${n}-bit)`) +
+          stepRow('Multiplicand M:', bitsHTML(Mbin), ' = '+M) +
+          stepRow("-M (2's comp):", bitsHTML(Mneg), ' = '+(-M)) +
+          stepRow('Multiplier Q:', bitsHTML(signedToBin(Q,n)), ' = '+Q) +
+          sep(),
+    state: { n, cycle: 0, aVal, qVal, qm1, aBits: signedToBin(aVal,n), qBits: signedToBin(qVal,n), q0: (toNBits(qVal))&1, actionText: 'Initialization', actionClass: '', shiftActive: false }
+  });
+
+  for(let step=1;step<=n;step++){
+    const q0=(toNBits(qVal))&1;
+    let op='', actionType='none', actionClass='', actionText='';
+
+    if(q0===1 && qm1===0){
+      aVal=signed(aVal-M);
+      op=`Q₀Q₋₁=10 → A = A - M`;
+      actionType='sub';
+      actionClass='warn';
+      actionText='Q₀Q₋₁ = 10 ➔ Subtract M (A ← A - M)';
+    } else if(q0===0 && qm1===1){
+      aVal=signed(aVal+M);
+      op=`Q₀Q₋₁=01 → A = A + M`;
+      actionType='add';
+      actionClass='ok';
+      actionText='Q₀Q₋₁ = 01 ➔ Add M (A ← A + M)';
+    } else {
+      op=`Q₀Q₋₁=${q0}${qm1} → No operation`;
+      actionText=`Q₀Q₋₁ = ${q0}${qm1} ➔ No arithmetic operation`;
+    }
+
+    // Step A: Math evaluation
+    steps.push({
+      html: stepRow(`Cycle ${step} (Math):`, op, `A becomes ${aVal}`),
+      state: { n, cycle: step, aVal, qVal, qm1, aBits: signedToBin(aVal,n), qBits: signedToBin(qVal,n), q0, actionType, actionClass, actionText, shiftActive: false }
+    });
+
+    // Step B: Arithmetic Right Shift
+    const aU=toNBits(aVal);
+    const qU=toNBits(qVal);
+    const newQm1=qU&1;
+    const newQU=( ((aU&1)<<(n-1)) | (qU>>1) ) & mask;
+    const aSign=(aU>>(n-1))&1;
+    const newAU=( (aSign<<(n-1)) | (aU>>1) ) & mask;
+
+    aVal=signed(newAU);
+    qVal=signed(newQU);
+    qm1=newQm1;
+
+    steps.push({
+      html: stepRow(`Cycle ${step} (Shift):`, `Arithmetic Right Shift (A, Q, Q₋₁)`, `A=${signedToBin(aVal,n)}, Q=${signedToBin(qVal,n)}, Q₋₁=${qm1}`),
+      state: { n, cycle: step, aVal, qVal, qm1, aBits: signedToBin(aVal,n), qBits: signedToBin(qVal,n), q0: (toNBits(qVal))&1, actionType: 'shift', actionText: 'Shifted A and Q right. Sign bit replicated.', shiftActive: true }
+    });
+  }
+
+  const aFinal=toNBits(aVal), qFinal=toNBits(qVal);
+  const resultU=(aFinal<<n)|qFinal;
+  const result2n=resultU>=(1<<(2*n-1))?resultU-(1<<(2*n)):resultU;
+
+  steps.push({
+    html: sep() + stepRow('Final Product (A:Q):', `<span class="result-val">${bitsHTML(signedToBin(aFinal,n)+signedToBin(qFinal,n))}</span>`) +
+          stepRow('Decimal Equivalent:', `<span class="result-val">${result2n}</span>`, `Expected: ${M} × ${Q} = ${M*Q}`),
+    state: { n, cycle: n, aVal, qVal, qm1, aBits: signedToBin(aVal,n), qBits: signedToBin(qVal,n), q0: (toNBits(qVal))&1, actionText: 'Multiplication Complete!', isComplete: true, shiftActive: false }
+  });
+
+  DynamicsEngine.register('booth', {
+    title: "Booth's Multiplication Algorithm",
+    steps,
+    renderVisual: (container, state, stepIdx, total, isFinal) => renderBoothDatapath(container, state, isFinal)
+  });
+}
+
+// 17. Karatsuba
+function karatsuba(x,y,depth=0){
+  if(depth>10||Math.abs(x)<10||Math.abs(y)<10) return {result:x*y,steps:[{depth,op:`Base: ${x} × ${y} = ${x*y}`}]};
+  const sx=x<0,sy=y<0;
+  const ax=Math.abs(x),ay=Math.abs(y);
+  const m=Math.floor(Math.max(ax.toString().length,ay.toString().length)/2);
+  const p=Math.pow(10,m);
+  const a=Math.floor(ax/p), b=ax%p;
+  const c=Math.floor(ay/p), d=ay%p;
+  const r0=karatsuba(b,d,depth+1);
+  const r1=karatsuba(a+b,c+d,depth+1);
+  const r2=karatsuba(a,c,depth+1);
+  const inner=r1.result-r2.result-r0.result;
+  const result=r2.result*p*p+inner*p+r0.result;
+  const steps=[{depth,op:`Split: ${ax}=${a}·10^${m}+${b}, ${ay}=${c}·10^${m}+${d}`},
+    {depth,op:`z2=a·c=${r2.result}, z0=b·d=${r0.result}, z1=(a+b)(c+d)-z2-z0=${inner}`},
+    {depth,op:`= z2·10^${2*m} + z1·10^${m} + z0 = ${r2.result*p*p} + ${inner*p} + ${r0.result} = ${result}`},
+    ...r0.steps,...r1.steps,...r2.steps];
+  return {result:(sx!==sy?-1:1)*result,steps};
+}
+
+function simKaratsuba(){
+  const A=parseInt($('kara_a').value)||1234;
+  const B=parseInt($('kara_b').value)||5678;
+  const {result}=karatsuba(A,B);
+
+  const m=Math.floor(Math.max(Math.abs(A).toString().length,Math.abs(B).toString().length)/2);
+  const p=Math.pow(10,m);
+  const a=Math.floor(Math.abs(A)/p), b=Math.abs(A)%p;
+  const c=Math.floor(Math.abs(B)/p), d=Math.abs(B)%p;
+  const z2=a*c, z0=b*d, z1=(a+b)*(c+d)-z2-z0;
+
+  const steps=[
+    {
+      html: stepHead(`Karatsuba Fast Multiplication: ${A} × ${B}`) +
+            stepRow('Split A:', `${A} = ${a} · 10<sup>${m}</sup> + ${b}`) +
+            stepRow('Split B:', `${B} = ${c} · 10<sup>${m}</sup> + ${d}`),
+      state: { A, B, a, b, c, d, m, phaseName: 'DIVIDE NUMBERS', activeSub: null }
+    },
+    {
+      html: stepRow('z₂ = a · c:', `${a} × ${c} = <span class="ok">${z2}</span>`, 'High partial product'),
+      state: { A, B, a, b, c, d, m, z2, phaseName: 'COMPUTE z2', activeSub: 'z2' }
+    },
+    {
+      html: stepRow('z₀ = b · d:', `${b} × ${d} = <span class="ok">${z0}</span>`, 'Low partial product'),
+      state: { A, B, a, b, c, d, m, z2, z0, phaseName: 'COMPUTE z0', activeSub: 'z0' }
+    },
+    {
+      html: stepRow('z₁ = (a+b)(c+d)−z₂−z₀:', `(${a+b})(${c+d}) − ${z2} − ${z0} = <span class="ok">${z1}</span>`, 'Cross term'),
+      state: { A, B, a, b, c, d, m, z2, z0, z1, phaseName: 'COMPUTE z1', activeSub: 'z1' }
+    },
+    {
+      html: sep() + stepRow('Final Product:', `<span class="result-val">${result}</span>`, `Complexity: O(n^1.585) vs naive O(n²)`),
+      state: { A, B, a, b, c, d, m, z2, z0, z1, result, phaseName: 'COMBINE RESULT', activeSub: null }
+    }
+  ];
+
+  DynamicsEngine.register('kara', {
+    title: 'Karatsuba Fast Multiplication',
+    steps,
+    renderVisual: (container, state, stepIdx, total, isFinal) => renderKaratsubaTree(container, state, isFinal)
+  });
+}
+
+// 18. Restoring Division
+function simRestoring(){
+  const dividend=clamp(parseInt($('res_div').value)||0,0,15);
+  const divisor=clamp(parseInt($('res_dvs').value)||1,1,15);
+  if(divisor===0){$('res_out').innerHTML='<span class="warn">Division by zero!</span>';return;}
+  const n=4;
+  const mask=(1<<n)-1;
+  const signedN=(v)=>{v=v&mask;return v>=(1<<(n-1))?v-(1<<n):v;}
+
+  let A=0, Q=dividend;
+  const steps=[];
+
+  steps.push({
+    html: stepHead(`Restoring Division: ${dividend} ÷ ${divisor}`) +
+          stepRow('Dividend:', bitsHTML(padBin(dividend,n)), ' = '+dividend) +
+          stepRow('Divisor:', bitsHTML(padBin(divisor,n)), ' = '+divisor) + sep(),
+    state: { n, cycle: 0, aVal: A, qVal: Q, divisor, aBits: padBin(A,n), qBits: padBin(Q,n), dBits: padBin(divisor,n), statusMsg: 'Initialized registers A=0, Q=Dividend, D=Divisor' }
+  });
+
+  for(let i=0;i<n;i++){
+    const msb_q=(Q>>(n-1))&1;
+    Q=((Q<<1)&mask);
+    A=((A<<1)&mask)|msb_q;
+    const A_s=signedN(A);
+    const A_sub=signedN(A_s-divisor);
+
+    let op, qi, restored=false;
+    if(A_sub>=0){
+      A=((A_sub)&mask);
+      Q=Q|1;
+      op=`A−D=${A_sub} ≥ 0 → Keep A, Set Q[0]=1`;
+      qi=1;
+    } else {
+      A=(A_s&mask);
+      Q=Q&(mask^0);
+      op=`A−D=${A_sub} < 0 → RESTORE A, Set Q[0]=0`;
+      qi=0;
+      restored=true;
+    }
+
+    steps.push({
+      html: stepRow(`Cycle ${i+1}:`, op, `A=${padBin(A,n)}, Q=${padBin(Q,n)}`),
+      state: { n, cycle: i+1, aVal: signedN(A), qVal: Q, divisor, aBits: padBin(A,n), qBits: padBin(Q,n), dBits: padBin(divisor,n), statusMsg: op, restorePulse: restored }
+    });
+  }
+
+  const quotient=Q&mask, remainder=A&mask;
+  steps.push({
+    html: sep() + stepRow('Final Quotient (Q):', `<span class="result-val">${bitsHTML(padBin(quotient,n))} = ${quotient}</span>`) +
+          stepRow('Final Remainder (A):', `<span class="result-val">${bitsHTML(padBin(remainder,n))} = ${remainder}</span>`) +
+          stepRow('Verification:', `<span class="ok">${quotient} × ${divisor} + ${remainder} = ${quotient*divisor+remainder}</span>`),
+    state: { n, cycle: n, aVal: remainder, qVal: quotient, divisor, aBits: padBin(remainder,n), qBits: padBin(quotient,n), dBits: padBin(divisor,n), statusMsg: 'Restoring division complete!', isComplete: true }
+  });
+
+  DynamicsEngine.register('res', {
+    title: 'Restoring Division',
+    steps,
+    renderVisual: (container, state, stepIdx, total, isFinal) => renderDivisionDatapath(container, state, true, isFinal)
+  });
+}
+
+// 19. Non-Restoring Division
+function simNonRestoring(){
+  const dividend=clamp(parseInt($('nres_div').value)||0,0,15);
+  const divisor=clamp(parseInt($('nres_dvs').value)||1,1,15);
+  if(divisor===0){$('nres_out').innerHTML='<span class="warn">Division by zero!</span>';return;}
+  const n=4;
+  const mask=(1<<n)-1;
+  const signed=(v)=>{v=((v%(1<<n))+(1<<n))%(1<<n); return v>=(1<<(n-1))?v-(1<<n):v;}
+  const uns=(v)=>((v%(1<<n))+(1<<n))%(1<<n);
+
+  let A=0, Q=dividend;
+  const steps=[];
+
+  steps.push({
+    html: stepHead(`Non-Restoring Division: ${dividend} ÷ ${divisor}`) +
+          stepRow('Dividend:', bitsHTML(padBin(dividend,n)), ' = '+dividend) +
+          stepRow('Divisor:', bitsHTML(padBin(divisor,n)), ' = '+divisor) + sep(),
+    state: { n, cycle: 0, aVal: A, qVal: Q, divisor, aBits: padBin(A,n), qBits: padBin(Q,n), dBits: padBin(divisor,n), statusMsg: 'Rule: If A≥0 → shift left, A−D; If A<0 → shift left, A+D' }
+  });
+
+  for(let i=0;i<n;i++){
+    const msb_q=(Q>>(n-1))&1;
+    Q=((Q<<1)&mask);
+    A=((uns(A)<<1)&mask)|msb_q;
+    const A_s=signed(A);
+
+    let newA, qi, op;
+    if(A_s>=0){
+      newA=A_s-divisor;
+      op=`A≥0 → A=A−D=${A_s}−${divisor}=${A_s-divisor}`;
+    } else {
+      newA=A_s+divisor;
+      op=`A<0 → A=A+D=${A_s}+${divisor}=${A_s+divisor}`;
+    }
+    qi=newA>=0?1:0;
+    Q=(Q&mask)|qi;
+    A=uns(newA);
+
+    steps.push({
+      html: stepRow(`Cycle ${i+1}:`, `${op} → Q₀=${qi}`, `A=${padBin(uns(newA),n)}, Q=${padBin(Q,n)}`),
+      state: { n, cycle: i+1, aVal: newA, qVal: Q, divisor, aBits: padBin(uns(newA),n), qBits: padBin(Q,n), dBits: padBin(divisor,n), statusMsg: op }
+    });
+  }
+
+  let finalA=signed(A), finalQ=Q&mask;
+  if(finalA<0){
+    finalA+=divisor;
+    steps.push({
+      html: stepRow('Restore Step (A < 0):', `A = A + D = ${signed(A)} + ${divisor} = ${finalA}`),
+      state: { n, cycle: n, aVal: finalA, qVal: finalQ, divisor, aBits: padBin(uns(finalA),n), qBits: padBin(finalQ,n), dBits: padBin(divisor,n), statusMsg: 'Remainder was negative; restored by adding divisor D.' }
+    });
+  }
+
+  steps.push({
+    html: sep() + stepRow('Final Quotient (Q):', `<span class="result-val">${bitsHTML(padBin(finalQ,n))} = ${finalQ}</span>`) +
+          stepRow('Final Remainder (A):', `<span class="result-val">${bitsHTML(padBin(uns(finalA),n))} = ${finalA}</span>`) +
+          stepRow('Verification:', `<span class="ok">${finalQ} × ${divisor} + ${finalA} = ${finalQ*divisor+finalA}</span>`),
+    state: { n, cycle: n, aVal: finalA, qVal: finalQ, divisor, aBits: padBin(uns(finalA),n), qBits: padBin(finalQ,n), dBits: padBin(divisor,n), statusMsg: 'Non-restoring division complete!', isComplete: true }
+  });
+
+  DynamicsEngine.register('nres', {
+    title: 'Non-Restoring Division',
+    steps,
+    renderVisual: (container, state, stepIdx, total, isFinal) => renderDivisionDatapath(container, state, false, isFinal)
+  });
+}
+
+/* ===== Auto-run defaults on load ===== */
+window.addEventListener('load',()=>{
+  ClockGen.init();
+  sim8bitAdd(); sim8bitSub(); sim16bitAdd(); sim8bitMul(); sim8bitDiv();
+  simBinDec(); simBinOct(); simBinHex(); simBinGray(); simGrayBin(); simOnesComp(); simTwosComp();
+  simHalfAdder(); simFullAdder(); simRCA(); simBooth(); simKaratsuba(); simRestoring(); simNonRestoring();
+});
+
+</script>
+</body>
+</html>
+
